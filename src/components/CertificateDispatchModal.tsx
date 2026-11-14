@@ -220,8 +220,8 @@ M-PESA Foundation Academy`
 
       toast.success(
         dispatchedCount > 1
-          ? `🎉 Dispatched ${dispatchedCount} official certificates to students' emails & Challenge Inboxes!`
-          : `🎉 Dispatched certificate directly to ${lastRecipient} and logged in Challenge Inbox!`,
+          ? `🎉 Dispatched ${dispatchedCount} official certificates to students' emails & Inboxes!`
+          : `🎉 Dispatched certificate directly to ${lastRecipient} and logged in Inbox!`,
         {
           id: toastId,
           description: "Student inboxes updated and notifications triggered.",
@@ -608,7 +608,7 @@ M-PESA Foundation Academy`
                   </div>
                   <div className="flex items-center gap-2 text-foreground font-medium">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>Web Challenge Inbox</span>
+                    <span>Reading Inbox</span>
                   </div>
                   <div className="flex items-center gap-2 text-foreground font-medium">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />

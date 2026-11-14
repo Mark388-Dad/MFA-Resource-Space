@@ -26,7 +26,6 @@ import { computeStudentLevel, getVerificationCode, CertificateData } from '@/lib
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AppDownloadButton } from '@/components/AppDownloadBanner';
 import { getUnifiedSubmissions, UnifiedSubmission } from '@/lib/submissionSyncService';
-import { SessionCountdownBanner } from '@/components/SessionCountdownBanner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
@@ -57,6 +56,7 @@ const MyProgress = () => {
   }, [selectedChallenge, defaultCategories]);
 
   const isStaff = profile?.role && profile.role !== "student";
+  const isLibrarian = profile?.role === "librarian" || profile?.role === "admin";
 
   const targetBooks = selectedChallenge?.target_books || TOTAL_BOOK_GOAL;
   const maxPerCat = selectedChallenge?.max_books_per_category || 4;
@@ -357,9 +357,6 @@ const MyProgress = () => {
             </p>
           </div>
         </div>
-
-        {/* Academy Reading Session Window Banner */}
-        <SessionCountdownBanner isLibrarian={isStaff} />
 
         {/* Active Challenge Info */}
         <div className="mb-6 space-y-3">
@@ -913,7 +910,7 @@ const MyProgress = () => {
                                   <Eye className="w-3.5 h-3.5" />
                                   View
                                 </Button>
-                                {isStaff && (
+                                {isLibrarian && (
                                   <>
                                     <Button
                                       size="sm"
@@ -1022,7 +1019,7 @@ const MyProgress = () => {
                             <Eye className="w-3.5 h-3.5" /> View Reflection
                           </Button>
 
-                          {isStaff && (
+                          {isLibrarian && (
                             <div className="flex gap-1.5">
                               <Button
                                 size="sm"

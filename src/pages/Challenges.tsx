@@ -57,7 +57,6 @@ import {
 import { cn } from "@/lib/utils";
 import { READING_CATEGORIES } from "@/lib/constants";
 import { safeStorage } from "@/lib/safeStorage";
-import { SessionCountdownBanner } from "@/components/SessionCountdownBanner";
 import { LockedChallengeNotice } from "@/components/LockedChallengeNotice";
 
 interface ChallengeSubmissionItem {
@@ -427,9 +426,6 @@ export default function ChallengesPage() {
           </div>
         </div>
 
-        {/* Academy Reading Session Window Banner */}
-        <SessionCountdownBanner isLibrarian={isStaff} />
-
         {/* Challenge Selection Cards Grid (Filtered by user role) */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
@@ -575,7 +571,7 @@ export default function ChallengesPage() {
                 title="Open Reading Challenge Inbox"
               >
                 <Link to="/inbox">
-                  <Mail className="w-3.5 h-3.5 text-amber-500" /> Open Challenge Inbox
+                  <Mail className="w-3.5 h-3.5 text-amber-500" /> Open Inbox
                 </Link>
               </Button>
               <Button

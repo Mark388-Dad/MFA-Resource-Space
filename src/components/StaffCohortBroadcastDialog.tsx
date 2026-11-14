@@ -119,7 +119,8 @@ export const StaffCohortBroadcastDialog: React.FC<Props> = ({
     }
   };
 
-  const [mode, setMode] = useState<"broadcast" | "certificate">(initialMode);
+  const canIssueCertificates = profile?.role === "librarian" || profile?.role === "admin";
+  const [mode, setMode] = useState<"broadcast" | "certificate">(canIssueCertificates ? initialMode : "broadcast");
   const [certTarget, setCertTarget] = useState<CertificateTargetInfo | null>(initialTarget);
 
   const [subject, setSubject] = useState(() => initialDraft?.subject || "");
@@ -138,9 +139,13 @@ export const StaffCohortBroadcastDialog: React.FC<Props> = ({
   const [isAutoSaving, setIsAutoSaving] = useState(false);
 
   useEffect(() => {
-    if (initialMode) setMode(initialMode);
+    if (!canIssueCertificates) {
+      setMode("broadcast");
+    } else if (initialMode) {
+      setMode(initialMode);
+    }
     if (initialTarget) setCertTarget(initialTarget);
-  }, [initialMode, initialTarget]);
+  }, [initialMode, initialTarget, canIssueCertificates]);
 
   // Determine cohort label
   const cohortLabel =
@@ -376,7 +381,7 @@ M-PESA Foundation Academy`
           },
         });
 
-        toast.success(`🎉 Dispatched certificate directly to ${recipientEmail} and logged in student's Challenge Inbox!`, {
+        toast.success(`🎉 Dispatched certificate directly to ${recipientEmail} and logged in student's Inbox!`, {
           id: toastId,
         });
 
@@ -489,56 +494,59 @@ M-PESA Foundation Academy`
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Badge className="bg-primary/10 text-primary border-primary/20 text-xs gap-1 font-semibold">
-                  <ShieldCheck className="w-3 h-3" /> Academy Communication &amp; Award Center
+                  <ShieldCheck className="w-3 h-3" />{" "}
+                  {canIssueCertificates ? "Academy Communication & Award Center" : "Academy Cohort Email Center"}
                 </Badge>
               </div>
               <DialogTitle className="text-xl font-bold font-display flex items-center gap-2">
-                {mode === "certificate" ? (
+                {canIssueCertificates && mode === "certificate" ? (
                   <>
                     <Award className="w-5 h-5 text-amber-500" /> Official Certificate Dispatch Studio
                   </>
                 ) : (
                   <>
-                    <Megaphone className="w-5 h-5 text-primary" /> Cohort Announcement &amp; Dispatch
+                    <Megaphone className="w-5 h-5 text-primary" /> Cohort Email &amp; Announcement
                   </>
                 )}
               </DialogTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {mode === "certificate"
+                {canIssueCertificates && mode === "certificate"
                   ? "Issue official Reading Challenge credentials with cryptographic verification hash, real SVG parchment, and instant student inbox delivery."
-                  : `Dispatches official reading announcements to all ${students.length} scholars in your assigned ${cohortLabel}.`}
+                  : `Send direct email announcements to all ${students.length} scholars in your assigned ${cohortLabel}.`}
               </p>
             </div>
 
-            {/* Mode Switcher Toggle */}
-            <div className="flex items-center p-1 rounded-2xl bg-muted border border-border shrink-0 text-xs">
-              <button
-                type="button"
-                onClick={() => setMode("broadcast")}
-                className={cn(
-                  "py-1.5 px-3 rounded-xl font-semibold flex items-center gap-1.5 transition-all text-xs",
-                  mode === "broadcast"
-                    ? "bg-background text-foreground shadow-xs font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Megaphone className="w-3.5 h-3.5 text-primary" />
-                <span>Broadcast</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("certificate")}
-                className={cn(
-                  "py-1.5 px-3 rounded-xl font-semibold flex items-center gap-1.5 transition-all text-xs",
-                  mode === "certificate"
-                    ? "bg-background text-foreground shadow-xs font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Award className="w-3.5 h-3.5 text-amber-500" />
-                <span>Certificate Dispatch</span>
-              </button>
-            </div>
+            {/* Mode Switcher Toggle (Certificate Dispatch for Librarians & Admins only) */}
+            {canIssueCertificates && (
+              <div className="flex items-center p-1 rounded-2xl bg-muted border border-border shrink-0 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setMode("broadcast")}
+                  className={cn(
+                    "py-1.5 px-3 rounded-xl font-semibold flex items-center gap-1.5 transition-all text-xs",
+                    mode === "broadcast"
+                      ? "bg-background text-foreground shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Megaphone className="w-3.5 h-3.5 text-primary" />
+                  <span>Broadcast</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("certificate")}
+                  className={cn(
+                    "py-1.5 px-3 rounded-xl font-semibold flex items-center gap-1.5 transition-all text-xs",
+                    mode === "certificate"
+                      ? "bg-background text-foreground shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Award className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Certificate Dispatch</span>
+                </button>
+              </div>
+            )}
           </div>
         </DialogHeader>
 
@@ -814,10 +822,10 @@ M-PESA Foundation Academy`
                     <div className="w-2 h-2 rounded-full shrink-0 bg-emerald-500 animate-pulse" />
                     <div className="truncate">
                       <span className="font-semibold text-foreground">
-                        Reading Challenge Inbox Dispatch:
+                        Reading Inbox Dispatch:
                       </span>
                       <span className="text-muted-foreground ml-1">
-                        Delivered directly to scholars' Reading Challenge Inboxes
+                        Delivered directly to scholars' Reading Inboxes
                       </span>
                     </div>
                   </div>

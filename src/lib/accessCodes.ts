@@ -17,6 +17,8 @@ export interface AccessCodeRecord {
 
 /** Standard official access codes for Mpesa Foundation Academy */
 const DELETED_CODES_KEY = "mfa_deleted_access_codes";
+const CUSTOM_CODES_KEY = "mfa_custom_access_codes";
+const DISABLED_CODES_KEY = "mfa_disabled_access_codes";
 
 export function getDeletedCodes(): string[] {
   if (typeof window === "undefined") return [];
@@ -31,12 +33,27 @@ export function recordDeletedCode(code: string) {
   if (typeof window === "undefined") return;
   try {
     const list = getDeletedCodes();
-    list.push(code.trim().toUpperCase());
-    list.push(code.trim().toUpperCase().replace(/[-\s]/g, ""));
+    const upper = code.trim().toUpperCase();
+    list.push(upper);
+    list.push(upper.replace(/[-\s]/g, ""));
     localStorage.setItem(DELETED_CODES_KEY, JSON.stringify([...new Set(list)]));
+
+    const custom = getCustomCodes().filter((c) => c.code.toUpperCase() !== upper);
+    localStorage.setItem(CUSTOM_CODES_KEY, JSON.stringify(custom));
+    window.dispatchEvent(new CustomEvent("mfa_access_codes_updated"));
   } catch (err) {
     console.warn("Could not save deleted code to storage:", err);
   }
+}
+
+export function unrecordDeletedCode(code: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const upper = code.trim().toUpperCase();
+    const clean = upper.replace(/[-\s]/g, "");
+    const list = getDeletedCodes().filter((c) => c !== upper && c !== clean);
+    localStorage.setItem(DELETED_CODES_KEY, JSON.stringify(list));
+  } catch {}
 }
 
 export function isCodeDeleted(code: string): boolean {
@@ -44,6 +61,53 @@ export function isCodeDeleted(code: string): boolean {
   const c = code.trim().toUpperCase();
   const clean = c.replace(/[-\s]/g, "");
   return list.includes(c) || list.includes(clean);
+}
+
+export function getDisabledCodes(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(DISABLED_CODES_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function setCodeDisabledLocal(code: string, disabled: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    const upper = code.trim().toUpperCase();
+    const current = getDisabledCodes().filter((c) => c !== upper);
+    if (disabled) current.push(upper);
+    localStorage.setItem(DISABLED_CODES_KEY, JSON.stringify(current));
+
+    const custom = getCustomCodes().map((c) =>
+      c.code.toUpperCase() === upper ? { ...c, is_active: !disabled } : c
+    );
+    localStorage.setItem(CUSTOM_CODES_KEY, JSON.stringify(custom));
+    window.dispatchEvent(new CustomEvent("mfa_access_codes_updated"));
+  } catch {}
+}
+
+export function getCustomCodes(): AccessCodeRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = JSON.parse(localStorage.getItem(CUSTOM_CODES_KEY) || "[]");
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCustomCodeLocal(record: AccessCodeRecord) {
+  if (typeof window === "undefined") return;
+  try {
+    const upper = record.code.trim().toUpperCase();
+    unrecordDeletedCode(upper);
+    const list = getCustomCodes().filter((c) => c.code.toUpperCase() !== upper);
+    list.unshift({ ...record, code: upper });
+    localStorage.setItem(CUSTOM_CODES_KEY, JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent("mfa_access_codes_updated"));
+  } catch {}
 }
 
 export const STANDARD_ACCESS_CODES: AccessCodeRecord[] = [
@@ -411,7 +475,17 @@ export const STANDARD_ACCESS_CODES: AccessCodeRecord[] = [
     description: "Elgon House Patron Access Code",
   },
 
-  // 7. General Staff & Librarian
+  // 7. General Staff, Challenge & Librarian
+  {
+    code: "READ-2026",
+    code_type: "student",
+    role_restriction: "all",
+    max_uses: 5000,
+    current_uses: 0,
+    is_active: true,
+    school_name: "Mpesa Foundation Academy",
+    description: "Universal Reading Challenge Entry Code (All Cohorts)",
+  },
   {
     code: "STAFF-2026",
     code_type: "tutor",
@@ -434,21 +508,50 @@ export const STANDARD_ACCESS_CODES: AccessCodeRecord[] = [
   },
 ];
 
-/** Check if a code matches an active standard code or database code */
+/** Increment usage counter cleanly in Supabase & local storage */
+export async function recordAccessCodeUse(rawCode: string): Promise<void> {
+  const code = (rawCode || "").trim().toUpperCase();
+  if (!code || code === "LIB-DIRECT" || code === "ADMIN-DIRECT") return;
+
+  try {
+    const custom = getCustomCodes().map((c) =>
+      c.code.toUpperCase() === code ? { ...c, current_uses: (c.current_uses || 0) + 1 } : c
+    );
+    localStorage.setItem(CUSTOM_CODES_KEY, JSON.stringify(custom));
+  } catch {}
+
+  try {
+    const { data } = await supabase
+      .from("access_codes")
+      .select("id, current_uses")
+      .ilike("code", code)
+      .maybeSingle();
+
+    if (data?.id) {
+      await supabase
+        .from("access_codes")
+        .update({ current_uses: (data.current_uses || 0) + 1 })
+        .eq("id", data.id);
+    }
+  } catch {
+    // non-blocking usage telemetry
+  }
+}
+
+/** Check if a code matches an active standard code, custom code, or database code */
 export async function validateAccessCode(rawCode: string, requestedRole: string = "student"): Promise<{
   valid: boolean;
   message?: string;
   matchedCode?: AccessCodeRecord;
 }> {
-  // Librarians do not need to verify the code; they have direct access
-  if (requestedRole === "librarian") {
+  if (requestedRole === "librarian" || requestedRole === "admin") {
     return {
       valid: true,
-      message: "Librarian direct access granted without verification.",
+      message: "Administrator & Librarian direct access granted without verification.",
       matchedCode: {
         code: "LIB-DIRECT",
         code_type: "librarian",
-        role_restriction: "librarian",
+        role_restriction: requestedRole,
         max_uses: 999999,
         current_uses: 0,
         is_active: true,
@@ -463,18 +566,20 @@ export async function validateAccessCode(rawCode: string, requestedRole: string 
     return { valid: false, message: "Please enter an access code" };
   }
 
-  // Check if code was permanently deleted by librarian
   if (isCodeDeleted(code)) {
-    return { valid: false, message: `Access code "${code}" has been deleted.` };
+    return { valid: false, message: `Access code "${code}" has been deleted by the librarian.` };
   }
 
-  // Normalized code without hyphens/spaces for fuzzy matching
   const cleanCode = code.replace(/[-\s]/g, "");
   if (isCodeDeleted(cleanCode)) {
-    return { valid: false, message: `Access code "${code}" has been deleted.` };
+    return { valid: false, message: `Access code "${code}" has been deleted by the librarian.` };
   }
 
-  // Helper to check if role matches restriction
+  const disabledList = getDisabledCodes();
+  if (disabledList.includes(code)) {
+    return { valid: false, message: `Access code "${code}" has been deactivated by the librarian.` };
+  }
+
   const isRolePermitted = (roleRestriction?: string | null) => {
     if (!roleRestriction || roleRestriction === "all") return true;
     const staffRoles = ["homeroom_tutor", "head_of_year", "house_patron", "librarian", "staff", "admin"];
@@ -483,37 +588,82 @@ export async function validateAccessCode(rawCode: string, requestedRole: string 
     if (roleRestriction === "student") {
       return requestedRole === "student";
     }
-
     if (roleRestriction === "staff" || roleRestriction === "STAFF") {
       return isStaffRequested;
     }
-
     if (roleRestriction === "tutor" || roleRestriction === "homeroom_tutor") {
       return requestedRole === "homeroom_tutor" || isStaffRequested;
     }
-
     if (roleRestriction === "librarian") {
       return requestedRole === "librarian" || isStaffRequested;
     }
-
     if (roleRestriction === "head_of_year") {
       return requestedRole === "head_of_year" || isStaffRequested;
     }
-
     if (roleRestriction === "house_patron") {
       return requestedRole === "house_patron" || isStaffRequested;
     }
-
     return true;
   };
 
-  // 1. Check local standard codes first for instant response
+  // 1. Check Supabase database first so deactivated/edited/custom codes in DB take live precedence
+  try {
+    const { data, error } = await supabase
+      .from("access_codes")
+      .select("*")
+      .ilike("code", code)
+      .maybeSingle();
+
+    if (!error && data) {
+      if (data.is_active === false) {
+        return { valid: false, message: "This access code has been disabled by the administrator" };
+      }
+      if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        return { valid: false, message: "This access code has expired" };
+      }
+      if (data.max_uses && data.current_uses && data.current_uses >= data.max_uses) {
+        return { valid: false, message: "This access code has reached its maximum allowed uses" };
+      }
+      if (!isRolePermitted(data.role_restriction)) {
+        if (data.role_restriction === "student") {
+          return { valid: false, message: "This code is valid for students only" };
+        }
+        return { valid: false, message: "This code is restricted to academy staff members" };
+      }
+      return { valid: true, matchedCode: data as unknown as AccessCodeRecord };
+    }
+  } catch (err) {
+    console.warn("validateAccessCode DB check note:", err);
+  }
+
+  // 2. Check custom codes created locally/cached in Librarian Command Center
+  const customMatch = getCustomCodes().find(
+    (c) =>
+      c.code.toUpperCase() === code ||
+      c.code.toUpperCase().replace(/[-\s]/g, "") === cleanCode
+  );
+  if (customMatch) {
+    if (!customMatch.is_active) {
+      return { valid: false, message: "This access code has been deactivated" };
+    }
+    if (!isRolePermitted(customMatch.role_restriction)) {
+      return {
+        valid: false,
+        message:
+          customMatch.role_restriction === "student"
+            ? "This code is restricted to student accounts only"
+            : "This code is reserved for academy staff/faculty",
+      };
+    }
+    return { valid: true, matchedCode: customMatch };
+  }
+
+  // 3. Check built-in standard academy codes
   const standard = STANDARD_ACCESS_CODES.find(
     (c) =>
       c.code.toUpperCase() === code ||
       c.code.toUpperCase().replace(/[-\s]/g, "") === cleanCode
   );
-
   if (standard) {
     if (!standard.is_active) {
       return { valid: false, message: "This access code has been deactivated" };
@@ -527,54 +677,13 @@ export async function validateAccessCode(rawCode: string, requestedRole: string 
     return { valid: true, matchedCode: standard };
   }
 
-  // 2. Query Supabase database access_codes
-  try {
-    const { data, error } = await supabase
-      .from("access_codes")
-      .select("*")
-      .ilike("code", code)
-      .maybeSingle();
-
-    if (error) {
-      console.warn("Error fetching access code from db:", error);
-      // Fallback: if user is typing any reasonable format like STU- or MFA-, allow as fallback
-      if (code.startsWith("MFA") || code.startsWith("STU") || code.startsWith("TUT") || code.startsWith("LIB")) {
-        return { valid: true };
-      }
-      return { valid: false, message: "Could not verify access code at this time" };
-    }
-
-    if (!data) {
-      // Check if it matches any pattern for MFA
-      if (code.startsWith("MFA") || code.startsWith("STU")) {
-        return { valid: true };
-      }
-      return { valid: false, message: `Access code "${code}" not found. Please contact the librarian.` };
-    }
-
-    if (data.is_active === false) {
-      return { valid: false, message: "This access code has been disabled by the administrator" };
-    }
-
-    if (data.max_uses && data.current_uses && data.current_uses >= data.max_uses) {
-      return { valid: false, message: "This access code has reached its maximum allowed uses" };
-    }
-
-    if (!isRolePermitted(data.role_restriction)) {
-      if (data.role_restriction === "student") {
-        return { valid: false, message: "This code is valid for students only" };
-      }
-      return { valid: false, message: "This code is restricted to staff members" };
-    }
-
-    return { valid: true, matchedCode: data as any };
-  } catch (err) {
-    console.error("validateAccessCode error:", err);
-    return { valid: true };
-  }
+  return {
+    valid: false,
+    message: `Access code "${code}" not found. Ask your librarian or use an active cohort code (e.g. STU-DP1, READ-2026).`,
+  };
 }
 
-/** Sync all standard codes to Supabase */
+/** Sync all standard & local custom codes to Supabase */
 export async function syncAllStandardCodes(): Promise<{ count: number; error?: string; total: number }> {
   try {
     const { data: existing, error: fetchErr } = await supabase.from("access_codes").select("code");
@@ -583,46 +692,57 @@ export async function syncAllStandardCodes(): Promise<{ count: number; error?: s
     }
     const existingSet = new Set((existing || []).map((e) => e.code.toUpperCase()));
 
-    const toInsert = STANDARD_ACCESS_CODES.filter((c) => !existingSet.has(c.code.toUpperCase()) && !isCodeDeleted(c.code)).map((c) => {
-      // Postgres check constraint "access_codes_code_type_check" strictly requires:
-      // code_type = ANY (ARRAY['librarian'::text, 'student'::text, 'tutor'::text])
-      let dbCodeType: "student" | "librarian" | "tutor" = "student";
-      if (c.role_restriction === "librarian" || c.code_type?.toLowerCase() === "librarian") {
-        dbCodeType = "librarian";
-      } else if (
-        c.role_restriction === "student" ||
-        c.code_type?.toLowerCase() === "student" ||
-        !c.role_restriction
-      ) {
-        dbCodeType = "student";
-      } else {
-        dbCodeType = "tutor";
+    const allSourceCodes = [...STANDARD_ACCESS_CODES, ...getCustomCodes()];
+    const dedupMap = new Map<string, AccessCodeRecord>();
+    allSourceCodes.forEach((c) => {
+      const upper = c.code.trim().toUpperCase();
+      if (!isCodeDeleted(upper) && !dedupMap.has(upper)) {
+        dedupMap.set(upper, { ...c, code: upper });
       }
-
-      return {
-        code: c.code.toUpperCase(),
-        code_type: dbCodeType,
-        role_restriction: c.role_restriction,
-        house: c.house || null,
-        year_group: c.year_group || null,
-        class_name: c.class_name || null,
-        max_uses: c.max_uses,
-        current_uses: 0,
-        is_active: true,
-        school_name: "Mpesa Foundation Academy",
-      };
     });
+
+    const toInsert = Array.from(dedupMap.values())
+      .filter((c) => !existingSet.has(c.code))
+      .map((c) => {
+        let dbCodeType: "student" | "librarian" | "tutor" = "student";
+        if (c.role_restriction === "librarian" || c.code_type?.toLowerCase() === "librarian") {
+          dbCodeType = "librarian";
+        } else if (
+          c.role_restriction === "student" ||
+          c.role_restriction === "all" ||
+          c.code_type?.toLowerCase() === "student" ||
+          !c.role_restriction
+        ) {
+          dbCodeType = "student";
+        } else {
+          dbCodeType = "tutor";
+        }
+
+        return {
+          code: c.code,
+          code_type: dbCodeType,
+          role_restriction: c.role_restriction || "all",
+          house: c.house || null,
+          year_group: c.year_group || null,
+          class_name: c.class_name || null,
+          max_uses: c.max_uses || 1000,
+          current_uses: c.current_uses || 0,
+          is_active: c.is_active !== false,
+          school_name: "Mpesa Foundation Academy",
+        };
+      });
 
     if (toInsert.length > 0) {
       const { error } = await supabase.from("access_codes").insert(toInsert);
       if (error) {
         console.error("Failed to insert missing standard codes:", error);
-        return { count: 0, total: STANDARD_ACCESS_CODES.length, error: error.message };
+        return { count: 0, total: dedupMap.size, error: error.message };
       }
     }
 
-    return { count: toInsert.length, total: STANDARD_ACCESS_CODES.length };
-  } catch (e: any) {
-    return { count: 0, total: STANDARD_ACCESS_CODES.length, error: e.message || "Failed to sync" };
+    return { count: toInsert.length, total: dedupMap.size };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Failed to sync";
+    return { count: 0, total: STANDARD_ACCESS_CODES.length, error: msg };
   }
 }

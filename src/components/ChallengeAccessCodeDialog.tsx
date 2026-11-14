@@ -89,7 +89,7 @@ export default function ChallengeAccessCodeDialog({
         window.dispatchEvent(new CustomEvent("mfa_registered_challenges_updated"));
       }
 
-      toast.success(`You are now registered for "${title}"! Welcome letter delivered to your Reading Challenge Inbox.`);
+      toast.success(`You are now registered for "${title}"! Welcome letter delivered to your Inbox.`);
       setCode("");
       onOpenChange(false);
       onSuccess();

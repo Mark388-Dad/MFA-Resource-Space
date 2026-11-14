@@ -38,6 +38,20 @@ import {
   CheckSquare,
   X,
   Filter,
+  Home,
+  Settings,
+  BarChart3,
+  Inbox,
+  BadgeCheck,
+  ListChecks,
+  Flag,
+  FolderUp,
+  Plus,
+  Layers,
+  Megaphone,
+  Link2,
+  IdCard,
+  UserCog,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -83,6 +97,7 @@ import { toast } from 'sonner';
 import { getUnifiedSubmissions } from '@/lib/submissionSyncService';
 import { LockedChallengeNotice } from '@/components/LockedChallengeNotice';
 import { CertificateDispatchModal, CertificateDispatchTarget } from '@/components/CertificateDispatchModal';
+import StaffCohortBroadcastDialog from '@/components/StaffCohortBroadcastDialog';
 import StudentBadgesShowcase from '@/components/StudentBadgesShowcase';
 import { computeStudentLevel, CertificateLevel } from '@/lib/certificateTypes';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -182,7 +197,7 @@ const Dashboard = () => {
     : profile?.role === 'house_patron'
     ? `HOUSE PATRON LEADERSHIP • ${profile.house ? `${profile.house.toUpperCase()} HOUSE` : 'ACADEMY HOUSES'}`
     : profile?.role === 'librarian' || profile?.role === 'admin'
-    ? 'ACADEMY DIRECTOR OF LITERACY & LIBRARIAN COMMAND'
+    ? '45-BOOK READING CHALLENGE 2025/2026 • HEAD LIBRARIAN & ADMIN'
     : 'ACADEMY FACULTY & STAFF OVERSIGHT';
 
   const roleDashboardTitle = profile?.role === 'head_of_year'
@@ -192,7 +207,7 @@ const Dashboard = () => {
     : profile?.role === 'house_patron'
     ? `${profile.house ? `${profile.house} ` : ''}House Patron Dashboard 🏆`
     : profile?.role === 'librarian' || profile?.role === 'admin'
-    ? 'Academy Librarian & Program Director Dashboard 📚'
+    ? 'Head Librarian & Admin Command Dashboard 📚'
     : 'Faculty & Staff Reading Overview 📊';
 
   const roleDashboardSubtitle = profile?.role === 'head_of_year'
@@ -202,7 +217,7 @@ const Dashboard = () => {
     : profile?.role === 'house_patron'
     ? `House reader tally, verified books logged, and leaderboard standings for ${profile.house || 'your house'}.`
     : profile?.role === 'librarian' || profile?.role === 'admin'
-    ? 'Whole-school reading administration: challenge configuration, submission approvals, and certified award dispatches.'
+    ? '45 Books Quest — Unified Librarian & Admin workspace for submissions, programme controls, broadcasts, certificates, and governance.'
     : 'Whole-school reading progress, cohort statistics, and house standings across the 45-book quest.';
 
   // Initialize staff filter default to assigned group once profile is loaded
@@ -922,139 +937,180 @@ const Dashboard = () => {
             {/* Live Session Countdown & Deadline Window (Visible to Staff) */}
             <SessionCountdownBanner isLibrarian={isLibrarian} />
 
-            {/* Modern Professional Linear-Gradient Floating Hero Card */}
-            <div
-              className="rounded-3xl p-7 sm:p-8 relative overflow-hidden border transition-all duration-300 shadow-2xl"
-              style={{
-                background:
-                  'linear-gradient(135deg, #090e1a 0%, #111827 40%, #1e1b4b 75%, #064e3b 100%)',
-                border: '1.5px solid rgba(255, 255, 255, 0.12)',
-                boxShadow:
-                  '0 24px 50px -12px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(99, 102, 241, 0.22)',
-              }}
-            >
-              {/* Subtle floating ambient lighting orbs */}
+            {/* Floating Well-Rounded Rotating-Gradient Staff Hero Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch">
+              {/* DIV 1 (6 Cols): Role Identity & Dashboard Title */}
               <div
-                className="absolute -right-20 -top-20 w-72 h-72 rounded-full blur-3xl opacity-35 pointer-events-none"
-                style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)' }}
-              />
-              <div
-                className="absolute -left-20 -bottom-20 w-72 h-72 rounded-full blur-3xl opacity-30 pointer-events-none"
-                style={{ background: 'radial-gradient(circle, #10b981 0%, transparent 70%)' }}
-              />
-
-              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                className={cn(
+                  "rounded-3xl border p-6 shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between gap-4 rotating-gradient-card",
+                  isLibrarian ? "xl:col-span-6" : "xl:col-span-7"
+                )}
+                style={{
+                  borderColor: "hsl(var(--v-electric-blue) / 0.34)",
+                  backgroundImage:
+                    "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-electric-blue) / 0.18) 0%, hsl(var(--card)) 48%, hsl(var(--v-emerald) / 0.16) 100%)",
+                }}
+              >
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest bg-white/10 text-emerald-300 border border-white/15 backdrop-blur-md mb-2.5">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary/15 text-primary border border-primary/25 mb-2.5">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    {roleBadgeText}
+                    <span>{roleBadgeText}</span>
                   </div>
-                  <h1 className="font-display text-3xl sm:text-4xl font-bold text-white mb-2 tracking-tight">
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
                     {roleDashboardTitle}
                   </h1>
-                  <p className="text-slate-200/90 text-xs sm:text-sm max-w-xl leading-relaxed">
+                  <p className="text-muted-foreground text-xs sm:text-sm mt-1.5 leading-relaxed">
                     {roleDashboardSubtitle}
                   </p>
                 </div>
-                <div className="flex items-center gap-2.5 flex-wrap shrink-0">
-                  {isLibrarian && (
-                    <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md p-1.5 rounded-2xl border border-white/20 shadow-md">
-                      <span className="text-[11px] font-bold text-white/90 px-2 flex items-center gap-1">
-                        <Lock className="w-3.5 h-3.5 text-amber-300" />
-                        Submissions:
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          const id = selectedChallenge?.id || "45-books";
-                          setChallengeStatus(id, "open");
-                        }}
-                        className={cn(
-                          "h-7 text-xs font-bold rounded-xl px-2.5",
-                          selectedChallenge?.status === "open"
-                            ? "bg-emerald-500 text-white shadow-xs"
-                            : "text-white/70 hover:text-white hover:bg-white/10"
-                        )}
-                      >
-                        🟢 Open
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          const id = selectedChallenge?.id || "45-books";
-                          setChallengeStatus(id, "locked");
-                        }}
-                        className={cn(
-                          "h-7 text-xs font-bold rounded-xl px-2.5",
-                          selectedChallenge?.status === "locked"
-                            ? "bg-amber-500 text-black shadow-xs font-extrabold"
-                            : "text-white/70 hover:text-white hover:bg-white/10"
-                        )}
-                      >
-                        🔒 Lock
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          const id = selectedChallenge?.id || "45-books";
-                          setChallengeStatus(id, "closed");
-                        }}
-                        className={cn(
-                          "h-7 text-xs font-bold rounded-xl px-2.5",
-                          selectedChallenge?.status === "closed"
-                            ? "bg-red-500 text-white shadow-xs"
-                            : "text-white/70 hover:text-white hover:bg-white/10"
-                        )}
-                      >
-                        🔴 Close
-                      </Button>
-                    </div>
-                  )}
+              </div>
 
-                  {/* Jump directly to Admin Command Center */}
+              {/* DIV 2 (3 Cols, Librarians): Live Submission Window Toggle Tile */}
+              {isLibrarian && (
+                <div
+                  className="xl:col-span-3 rounded-3xl border p-5 shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between gap-3 rotating-gradient-card"
+                  style={{
+                    borderColor: "hsl(var(--v-yellow) / 0.38)",
+                    backgroundImage:
+                      "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-yellow) / 0.18) 0%, hsl(var(--card)) 52%, hsl(var(--v-orange) / 0.16) 100%)",
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5" />
+                      Challenge State
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-background/80 border border-border/70 text-foreground capitalize">
+                      {selectedChallenge?.status || "open"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const id = selectedChallenge?.id || "45-books";
+                        setChallengeStatus(id, "open");
+                      }}
+                      className={cn(
+                        "h-9 text-xs font-bold rounded-2xl px-2 border",
+                        selectedChallenge?.status === "open"
+                          ? "bg-emerald-500 text-white border-emerald-400 shadow-sm"
+                          : "bg-background/70 text-foreground/80 border-border/60 hover:bg-emerald-500/15"
+                      )}
+                    >
+                      Open
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const id = selectedChallenge?.id || "45-books";
+                        setChallengeStatus(id, "locked");
+                      }}
+                      className={cn(
+                        "h-9 text-xs font-bold rounded-2xl px-2 border",
+                        selectedChallenge?.status === "locked"
+                          ? "bg-amber-500 text-slate-950 border-amber-400 shadow-sm font-extrabold"
+                          : "bg-background/70 text-foreground/80 border-border/60 hover:bg-amber-500/15"
+                      )}
+                    >
+                      Lock
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const id = selectedChallenge?.id || "45-books";
+                        setChallengeStatus(id, "closed");
+                      }}
+                      className={cn(
+                        "h-9 text-xs font-bold rounded-2xl px-2 border",
+                        selectedChallenge?.status === "closed"
+                          ? "bg-rose-500 text-white border-rose-400 shadow-sm"
+                          : "bg-background/70 text-foreground/80 border-border/60 hover:bg-rose-500/15"
+                      )}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* DIV 3 (3 Cols Librarian / 5 Cols Staff): Quick Actions & Dispatches Tile */}
+              <div
+                className={cn(
+                  "rounded-3xl border p-5 shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between gap-3 rotating-gradient-card",
+                  isLibrarian ? "xl:col-span-3" : "xl:col-span-5"
+                )}
+                style={{
+                  borderColor: "hsl(var(--v-violet) / 0.34)",
+                  backgroundImage:
+                    "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-violet) / 0.16) 0%, hsl(var(--card)) 52%, hsl(var(--v-hot-pink) / 0.14) 100%)",
+                }}
+              >
+                <div className="text-[11px] font-extrabold uppercase tracking-wider text-violet-700 dark:text-violet-300">
+                  Quick Dispatches &amp; Tools
+                </div>
+                <div className="flex flex-wrap gap-2">
                   {isLibrarian && (
                     <Button
                       type="button"
+                      size="sm"
                       onClick={() => navigate("/admin?s=submissions")}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold gap-2 rounded-xl text-xs h-9 px-4 shadow-md transition-transform hover:scale-105"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold gap-1.5 rounded-2xl text-xs h-9 px-3.5 shadow-sm whitespace-nowrap shrink-0"
                     >
-                      <ShieldCheck className="w-4 h-4 text-amber-300" />
-                      <span>Admin Command Center</span>
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Command Center</span>
                     </Button>
                   )}
 
-                  {/* Admin Certificate Dispatch Action */}
-                  <Button
-                    type="button"
-                    onClick={() => setCertStudentPickerOpen(true)}
-                    className="bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:opacity-95 text-slate-950 border-0 shadow-md font-bold gap-2 rounded-xl text-xs h-9 px-4 cursor-pointer transition-transform hover:scale-105"
-                  >
-                    <Award className="w-4 h-4 text-slate-950" />
-                    <span>Certificate Dispatch</span>
-                  </Button>
+                  {isLibrarian ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setCertStudentPickerOpen(true)}
+                      className="bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:opacity-95 text-slate-950 border-0 shadow-sm font-bold gap-1.5 rounded-2xl text-xs h-9 px-3.5 cursor-pointer whitespace-nowrap shrink-0"
+                    >
+                      <Award className="w-3.5 h-3.5 text-slate-950" />
+                      <span>Certificates</span>
+                    </Button>
+                  ) : (
+                    <StaffCohortBroadcastDialog
+                      staffRole={profile?.role}
+                      yearGroup={profile?.year_group}
+                      className={profile?.class_name}
+                      house={profile?.house}
+                      triggerButton={
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:opacity-95 text-white border-0 shadow-sm font-bold gap-1.5 rounded-2xl text-xs h-9 px-3.5 cursor-pointer whitespace-nowrap shrink-0"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Send Cohort Email</span>
+                        </Button>
+                      }
+                    />
+                  )}
 
                   <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => navigate("/inbox")}
-                    className="bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-md backdrop-blur-md gap-2 rounded-xl text-xs h-9 px-4 font-semibold"
+                    className="bg-background/80 hover:bg-muted text-foreground border-border/80 shadow-xs gap-1.5 rounded-2xl text-xs h-9 px-3.5 font-semibold whitespace-nowrap shrink-0"
                   >
-                    <Mail className="w-4 h-4 text-amber-300" />
-                    <span>Email Inbox</span>
-                    {unreadEmailCount > 0 ? (
-                      <Badge className="bg-red-500 text-white font-bold text-xs px-2 py-0.5 ml-1 animate-pulse">
-                        {unreadEmailCount} Unread
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-emerald-500/80 text-white text-[10px] px-1.5 py-0 ml-1">
-                        0
-                      </Badge>
-                    )}
+                    <Mail className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Inbox</span>
+                    <span className="px-1.5 py-0.5 rounded-lg bg-primary/15 text-primary text-[10px] font-bold tabular-nums">
+                      {unreadEmailCount || 0}
+                    </span>
                   </Button>
+
                   <AppDownloadButton
-                    className="bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-md backdrop-blur-md rounded-xl text-xs h-9 px-4 font-semibold"
-                    label="Download App"
+                    className="bg-background/80 hover:bg-muted text-foreground border-border/80 shadow-xs rounded-2xl text-xs h-9 px-3.5 font-semibold whitespace-nowrap shrink-0"
+                    label="App"
                   />
                 </div>
               </div>
@@ -1070,24 +1126,31 @@ const Dashboard = () => {
                   </h2>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
                   Live Updates
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
                 {/* Card 1: Total Students */}
-                <div className="rounded-3xl border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-card to-card p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between aspect-square sm:aspect-auto sm:min-h-[175px] relative overflow-hidden group">
+                <div
+                  className="rounded-3xl border p-6 shadow-md hover:-translate-y-0.5 transition-all flex flex-col justify-between sm:min-h-[175px] relative overflow-hidden group rotating-gradient-card"
+                  style={{
+                    borderColor: "hsl(var(--v-emerald) / 0.36)",
+                    backgroundImage:
+                      "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-emerald) / 0.18) 0%, hsl(var(--card)) 52%, hsl(var(--v-mint) / 0.14) 100%)",
+                  }}
+                >
                   <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold shadow-xs">
                       <Users className="w-6 h-6" />
                     </div>
-                    <Badge variant="outline" className="text-[11px] font-semibold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
+                    <Badge variant="outline" className="text-[11px] font-semibold border-emerald-500/40 text-emerald-700 dark:text-emerald-300 bg-emerald-500/10">
                       Academy Roster
                     </Badge>
                   </div>
                   <div className="my-auto pt-2">
-                    <div className="text-4xl sm:text-5xl font-display font-extrabold text-foreground tracking-tight">
+                    <div className="text-4xl sm:text-5xl font-display font-extrabold text-foreground tracking-tight tabular-nums">
                       {totalEnrolledStudents || totalSchoolReaders || 0}
                     </div>
                     <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1 font-bold">
@@ -1096,22 +1159,29 @@ const Dashboard = () => {
                   </div>
                   <div className="text-[11px] text-muted-foreground pt-3 border-t border-border/50 flex items-center justify-between">
                     <span>Active Readers</span>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">{totalSchoolReaders} logging</span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{totalSchoolReaders} logging</span>
                   </div>
                 </div>
 
                 {/* Card 2: Total Books */}
-                <div className="rounded-3xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between aspect-square sm:aspect-auto sm:min-h-[175px] relative overflow-hidden group">
+                <div
+                  className="rounded-3xl border p-6 shadow-md hover:-translate-y-0.5 transition-all flex flex-col justify-between sm:min-h-[175px] relative overflow-hidden group rotating-gradient-card"
+                  style={{
+                    borderColor: "hsl(var(--v-electric-blue) / 0.36)",
+                    backgroundImage:
+                      "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-electric-blue) / 0.18) 0%, hsl(var(--card)) 52%, hsl(var(--v-cyan) / 0.14) 100%)",
+                  }}
+                >
                   <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-xs">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
                       <BookOpen className="w-6 h-6" />
                     </div>
-                    <Badge variant="outline" className="text-[11px] font-semibold border-primary/40 text-primary bg-primary/5">
+                    <Badge variant="outline" className="text-[11px] font-semibold border-primary/40 text-primary bg-primary/10">
                       Verified Books
                     </Badge>
                   </div>
                   <div className="my-auto pt-2">
-                    <div className="text-4xl sm:text-5xl font-display font-extrabold text-foreground tracking-tight">
+                    <div className="text-4xl sm:text-5xl font-display font-extrabold text-foreground tracking-tight tabular-nums">
                       {totalSchoolBooks}
                     </div>
                     <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1 font-bold">
@@ -1127,18 +1197,23 @@ const Dashboard = () => {
                 {/* Card 3: Active Challenges */}
                 <Link
                   to="/challenges"
-                  className="rounded-3xl border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-card to-card p-6 shadow-sm hover:shadow-md hover:border-amber-500/50 transition-all flex flex-col justify-between aspect-square sm:aspect-auto sm:min-h-[175px] relative overflow-hidden group cursor-pointer block"
+                  className="rounded-3xl border p-6 shadow-md hover:-translate-y-0.5 transition-all flex flex-col justify-between sm:min-h-[175px] relative overflow-hidden group cursor-pointer block rotating-gradient-card"
+                  style={{
+                    borderColor: "hsl(var(--v-yellow) / 0.40)",
+                    backgroundImage:
+                      "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-yellow) / 0.20) 0%, hsl(var(--card)) 52%, hsl(var(--v-orange) / 0.14) 100%)",
+                  }}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500 text-black flex items-center justify-center font-bold shadow-xs">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center font-bold shadow-xs">
                       <Trophy className="w-6 h-6" />
                     </div>
-                    <Badge variant="outline" className="text-[11px] font-semibold border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/5 flex items-center gap-1">
+                    <Badge variant="outline" className="text-[11px] font-semibold border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-500/10 flex items-center gap-1">
                       Active Now <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                     </Badge>
                   </div>
                   <div className="my-auto pt-2">
-                    <div className="text-4xl sm:text-5xl font-display font-extrabold text-foreground tracking-tight">
+                    <div className="text-4xl sm:text-5xl font-display font-extrabold text-foreground tracking-tight tabular-nums">
                       {(activeChallenges?.length) || (challenges?.filter((c) => c?.is_active && c?.status !== "closed")?.length) || 1}
                     </div>
                     <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1 font-bold">
@@ -1152,6 +1227,305 @@ const Dashboard = () => {
                 </Link>
               </div>
             </div>
+
+            {/* ========================================================================= */}
+            {/* LIBRARIAN & ADMIN COMMAND HUB — Color-coded ordered workspace sections     */}
+            {/* ========================================================================= */}
+            {isLibrarian && (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white flex items-center justify-center shadow-sm">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm sm:text-base font-display font-bold text-foreground tracking-tight">
+                        45-Book Reading Challenge 2025/2026 • Librarian Workspace
+                      </h2>
+                      <p className="text-[11px] text-muted-foreground">
+                        45 Books Quest — Quick-launch every librarian &amp; admin module arranged in operational order.
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[11px] font-mono border-emerald-500/40 bg-emerald-500/10 text-emerald-500 self-start sm:self-auto">
+                    7 Modules • Unified Librarian &amp; Admin
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  {/* 01 • Reading Portal */}
+                  <div className="rounded-3xl border-2 border-emerald-500/35 bg-gradient-to-br from-emerald-500/12 via-teal-500/5 to-card p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-emerald-500/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-mono font-black bg-emerald-500 text-white shadow-xs">
+                          01
+                        </span>
+                        <div>
+                          <h3 className="font-display font-bold text-base text-foreground">Reading Portal</h3>
+                          <p className="text-[11px] text-muted-foreground">Core academy pages, leaderboards, inbox &amp; settings</p>
+                        </div>
+                      </div>
+                      <Home className="w-5 h-5 text-emerald-500 shrink-0" />
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {[
+                        { label: 'Dashboard', desc: 'Overview & KPIs', to: '/dashboard', icon: Home, badgeBg: 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30' },
+                        { label: 'Challenges', desc: '45 Books Quest', to: '/challenges', icon: Trophy, badgeBg: 'bg-amber-500/20 text-amber-500 border-amber-500/30' },
+                        { label: 'Full Leaderboard', desc: 'School Rankings', to: '/leaderboard', icon: BarChart3, badgeBg: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' },
+                        { label: 'Inbox', desc: unreadEmailCount > 0 ? `${unreadEmailCount} Unread` : 'Mail & Replies', to: '/inbox', icon: Inbox, badgeBg: 'bg-orange-500/20 text-orange-500 border-orange-500/30' },
+                        { label: 'Certificates', desc: 'Certificate Studio', to: '/admin?s=certificates', icon: BadgeCheck, badgeBg: 'bg-cyan-500/20 text-cyan-500 border-cyan-500/30' },
+                        { label: 'Settings', desc: 'Account & Theme', to: '/settings', icon: Settings, badgeBg: 'bg-teal-500/20 text-teal-500 border-teal-500/30' },
+                      ].map((item) => (
+                        <Link
+                          key={item.label}
+                          to={item.to}
+                          className="group rounded-2xl border border-emerald-500/20 bg-background/75 hover:bg-background hover:border-emerald-500/50 p-3 transition-all hover:-translate-y-0.5 shadow-2xs flex flex-col justify-between gap-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={cn('w-8 h-8 rounded-xl border flex items-center justify-center', item.badgeBg)}>
+                              <item.icon className="w-4 h-4" />
+                            </span>
+                            <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-foreground leading-tight">{item.label}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{item.desc}</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 02 • Submissions & Reviews */}
+                  <div className="rounded-3xl border-2 border-blue-500/35 bg-gradient-to-br from-blue-500/12 via-cyan-500/5 to-card p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-blue-500/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-mono font-black bg-blue-500 text-white shadow-xs">
+                          02
+                        </span>
+                        <div>
+                          <h3 className="font-display font-bold text-base text-foreground">Submissions &amp; Reviews</h3>
+                          <p className="text-[11px] text-muted-foreground">Audit logs, inspect flagged reflections &amp; import records</p>
+                        </div>
+                      </div>
+                      <ListChecks className="w-5 h-5 text-blue-500 shrink-0" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      {[
+                        { label: 'All Submissions', desc: 'Approve, review & export', to: '/admin?s=submissions', icon: ListChecks, badgeBg: 'bg-blue-500/20 text-blue-500 border-blue-500/30' },
+                        { label: 'Flagged', desc: 'Policy & AI check queue', to: '/admin?s=flagged', icon: Flag, badgeBg: 'bg-red-500/20 text-red-500 border-red-500/30' },
+                        { label: 'Bulk Import', desc: 'Upload CSV / spreadsheets', to: '/admin?s=import', icon: FolderUp, badgeBg: 'bg-cyan-500/20 text-cyan-500 border-cyan-500/30' },
+                      ].map((item) => (
+                        <Link
+                          key={item.label}
+                          to={item.to}
+                          className="group rounded-2xl border border-blue-500/20 bg-background/75 hover:bg-background hover:border-blue-500/50 p-3.5 transition-all hover:-translate-y-0.5 shadow-2xs flex flex-col justify-between gap-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={cn('w-9 h-9 rounded-xl border flex items-center justify-center', item.badgeBg)}>
+                              <item.icon className="w-4 h-4" />
+                            </span>
+                            <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-foreground">{item.label}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">{item.desc}</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 03 • Programme & Controls */}
+                  <div className="rounded-3xl border-2 border-amber-500/35 bg-gradient-to-br from-amber-500/12 via-yellow-500/5 to-card p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-amber-500/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-mono font-black bg-amber-500 text-black shadow-xs">
+                          03
+                        </span>
+                        <div>
+                          <h3 className="font-display font-bold text-base text-foreground">Programme &amp; Controls</h3>
+                          <p className="text-[11px] text-muted-foreground">Session toggles, challenges, categories &amp; Certificate Studio</p>
+                        </div>
+                      </div>
+                      <Sliders className="w-5 h-5 text-amber-500 shrink-0" />
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {[
+                        { label: 'Session & Theme Controls', desc: 'Dates, lock & themes', to: '/admin?s=controls', icon: Sliders, badgeBg: 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30' },
+                        { label: 'Active Challenges', desc: 'Manage live quests', to: '/admin?s=challenges', icon: Trophy, badgeBg: 'bg-amber-500/20 text-amber-500 border-amber-500/30' },
+                        { label: 'Enrolment & Participants', desc: 'Students & staff roster', to: '/admin?s=registrations', icon: Users, badgeBg: 'bg-teal-500/20 text-teal-500 border-teal-500/30' },
+                        { label: 'Create Challenge', desc: 'Launch new challenge', to: '/admin?s=create', icon: Plus, badgeBg: 'bg-green-500/20 text-green-500 border-green-500/30' },
+                        { label: 'Reading Categories', desc: 'Realms & prompts', to: '/admin?s=categories', icon: Layers, badgeBg: 'bg-fuchsia-500/20 text-fuchsia-500 border-fuchsia-500/30' },
+                        { label: 'Certificate Studio', desc: 'Design & generate PDFs', to: '/admin?s=certificates', icon: Award, badgeBg: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' },
+                      ].map((item) => (
+                        <Link
+                          key={item.label}
+                          to={item.to}
+                          className="group rounded-2xl border border-amber-500/20 bg-background/75 hover:bg-background hover:border-amber-500/50 p-3 transition-all hover:-translate-y-0.5 shadow-2xs flex flex-col justify-between gap-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={cn('w-8 h-8 rounded-xl border flex items-center justify-center', item.badgeBg)}>
+                              <item.icon className="w-4 h-4" />
+                            </span>
+                            <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-foreground leading-tight">{item.label}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{item.desc}</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 04 • Publishing & Broadcasts */}
+                  <div className="rounded-3xl border-2 border-rose-500/35 bg-gradient-to-br from-rose-500/12 via-pink-500/5 to-card p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-rose-500/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-mono font-black bg-rose-500 text-white shadow-xs">
+                          04
+                        </span>
+                        <div>
+                          <h3 className="font-display font-bold text-base text-foreground">Publishing &amp; Broadcasts</h3>
+                          <p className="text-[11px] text-muted-foreground">Email blasts, award dispatches, redirects &amp; Homepage Studio</p>
+                        </div>
+                      </div>
+                      <Megaphone className="w-5 h-5 text-rose-500 shrink-0" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {[
+                        { label: 'Mass Broadcaster', desc: 'Announcements to students & staff', to: '/admin?s=broadcast', icon: Megaphone, badgeBg: 'bg-rose-500/20 text-rose-500 border-rose-500/30' },
+                        { label: 'Certificate Dispatch', desc: 'Email verified awards & PDFs', to: '/admin?s=certificate-dispatch', icon: Award, badgeBg: 'bg-amber-500/20 text-amber-500 border-amber-500/30' },
+                        { label: 'System Links & Redirects', desc: 'Verification & download URLs', to: '/admin?s=system-links', icon: Link2, badgeBg: 'bg-cyan-500/20 text-cyan-500 border-cyan-500/30' },
+                        { label: 'Homepage Studio', desc: 'Customize public homepage', to: '/admin?s=homepage', icon: Home, badgeBg: 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30' },
+                      ].map((item) => (
+                        <Link
+                          key={item.label}
+                          to={item.to}
+                          className="group rounded-2xl border border-rose-500/20 bg-background/75 hover:bg-background hover:border-rose-500/50 p-3 transition-all hover:-translate-y-0.5 shadow-2xs flex flex-col justify-between gap-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={cn('w-8 h-8 rounded-xl border flex items-center justify-center', item.badgeBg)}>
+                              <item.icon className="w-4 h-4" />
+                            </span>
+                            <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-rose-500 group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-foreground leading-tight">{item.label}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{item.desc}</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 05 • People & Governance */}
+                  <div className="rounded-3xl border-2 border-indigo-500/35 bg-gradient-to-br from-indigo-500/12 via-blue-500/5 to-card p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-indigo-500/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-mono font-black bg-indigo-500 text-white shadow-xs">
+                          05
+                        </span>
+                        <div>
+                          <h3 className="font-display font-bold text-base text-foreground">People &amp; Governance</h3>
+                          <p className="text-[11px] text-muted-foreground">Manage student profiles, staff roles &amp; access codes</p>
+                        </div>
+                      </div>
+                      <IdCard className="w-5 h-5 text-indigo-500 shrink-0" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      {[
+                        { label: 'Student Profiles', desc: 'Edit cohorts, houses & resets', to: '/admin?s=students', icon: IdCard, badgeBg: 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30' },
+                        { label: 'Staff Members', desc: 'Tutors, patrons & librarians', to: '/admin?s=members', icon: UserCog, badgeBg: 'bg-indigo-500/20 text-indigo-500 border-indigo-500/30' },
+                        { label: 'Access Codes', desc: 'Registration & cohort codes', to: '/admin?s=codes', icon: KeyRound, badgeBg: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' },
+                      ].map((item) => (
+                        <Link
+                          key={item.label}
+                          to={item.to}
+                          className="group rounded-2xl border border-indigo-500/20 bg-background/75 hover:bg-background hover:border-indigo-500/50 p-3.5 transition-all hover:-translate-y-0.5 shadow-2xs flex flex-col justify-between gap-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={cn('w-9 h-9 rounded-xl border flex items-center justify-center', item.badgeBg)}>
+                              <item.icon className="w-4 h-4" />
+                            </span>
+                            <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-foreground">{item.label}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">{item.desc}</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 06 • Data & Leaderboard Audit + System Verification */}
+                  <div className="rounded-3xl border-2 border-violet-500/35 bg-gradient-to-br from-violet-500/12 via-purple-500/5 to-card p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-violet-500/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-mono font-black bg-violet-500 text-white shadow-xs">
+                          06
+                        </span>
+                        <div>
+                          <h3 className="font-display font-bold text-base text-foreground">Data Audit &amp; System Verification</h3>
+                          <p className="text-[11px] text-muted-foreground">Unclipped school rankings &amp; year-group migration checks</p>
+                        </div>
+                      </div>
+                      <CheckCircle2 className="w-5 h-5 text-violet-500 shrink-0" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Link
+                        to="/admin?s=leaderboard"
+                        className="group rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-background/80 hover:border-amber-500/60 p-4 transition-all hover:-translate-y-0.5 shadow-2xs flex flex-col justify-between gap-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="w-9 h-9 rounded-xl border bg-amber-500/20 text-amber-500 border-amber-500/30 flex items-center justify-center">
+                            <Trophy className="w-4 h-4" />
+                          </span>
+                          <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-500">
+                            Data &amp; Audit
+                          </Badge>
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-foreground flex items-center justify-between">
+                            <span>Full Leaderboard Audit</span>
+                            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                          <div className="text-[11px] text-muted-foreground mt-1">
+                            Inspect every student, house, and cohort ranking with export tools.
+                          </div>
+                        </div>
+                      </Link>
+
+                      <Link
+                        to="/admin/migration-check"
+                        className="group rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 to-background/80 hover:border-violet-500/60 p-4 transition-all hover:-translate-y-0.5 shadow-2xs flex flex-col justify-between gap-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="w-9 h-9 rounded-xl border bg-violet-500/20 text-violet-500 border-violet-500/30 flex items-center justify-center">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </span>
+                          <Badge variant="outline" className="text-[10px] border-violet-500/40 text-violet-500">
+                            System Verification
+                          </Badge>
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-foreground flex items-center justify-between">
+                            <span>Migration Check</span>
+                            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-violet-500 group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                          <div className="text-[11px] text-muted-foreground mt-1">
+                            Verify DP2, DP1 &amp; G10 counts, role distribution, and mismatched records.
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 1. Dynamic Cohort & Leadership Selection Bar */}
             <Card className="rounded-3xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-card to-card shadow-sm overflow-hidden">
               <CardHeader className="border-b border-border/40 pb-4">
@@ -1562,35 +1936,44 @@ const Dashboard = () => {
                 </div>
               </CardHeader>
 
-              {/* PERSISTENT ACTION BAR FOR BULK CERTIFICATE DISPATCH & COHORT FILTERING */}
-              <div className="bg-gradient-to-r from-amber-500/10 via-emerald-500/5 to-muted/40 border-b border-border/80 px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 sticky top-0 z-10 backdrop-blur-md">
-                <div className="flex items-center gap-3 flex-wrap">
-                  {/* Master Checkbox for All Visible */}
-                  <label className="flex items-center gap-2 cursor-pointer font-bold text-xs text-foreground select-none">
-                    <Checkbox
-                      checked={isAllVisibleRosterSelected ? true : isSomeVisibleRosterSelected ? "indeterminate" : false}
-                      onCheckedChange={toggleSelectAllVisibleDashboard}
-                      aria-label="Select all visible students"
-                    />
-                    <span>
-                      {isAllVisibleRosterSelected ? "Deselect Visible" : `Select Visible (${filteredCohortRoster.length})`}
-                    </span>
-                  </label>
+              {/* PERSISTENT ACTION BAR FOR COHORT FILTERING (PLUS CERTIFICATE DISPATCH FOR LIBRARIANS ONLY) */}
+              <div className="bg-gradient-to-r from-emerald-500/8 via-blue-500/5 to-muted/40 border-b border-border/80 px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 sticky top-0 z-10 backdrop-blur-md">
+                {isLibrarian ? (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {/* Master Checkbox for All Visible */}
+                    <label className="flex items-center gap-2 cursor-pointer font-bold text-xs text-foreground select-none">
+                      <Checkbox
+                        checked={isAllVisibleRosterSelected ? true : isSomeVisibleRosterSelected ? "indeterminate" : false}
+                        onCheckedChange={toggleSelectAllVisibleDashboard}
+                        aria-label="Select all visible students"
+                      />
+                      <span>
+                        {isAllVisibleRosterSelected ? "Deselect Visible" : `Select Visible (${filteredCohortRoster.length})`}
+                      </span>
+                    </label>
 
-                  {/* Selection Status Badge */}
-                  {dashboardSelectedUserIds.size > 0 ? (
-                    <Badge className="bg-amber-500 text-black font-extrabold text-[11px] px-2.5 py-0.5 rounded-lg shadow-xs">
-                      {dashboardSelectedUserIds.size} {dashboardSelectedUserIds.size === 1 ? "Scholar" : "Scholars"} Checked
-                    </Badge>
-                  ) : (
-                    <span className="text-xs text-muted-foreground hidden lg:inline">
-                      (Check scholars to dispatch certificates in bulk)
+                    {/* Selection Status Badge */}
+                    {dashboardSelectedUserIds.size > 0 ? (
+                      <Badge className="bg-amber-500 text-black font-extrabold text-[11px] px-2.5 py-0.5 rounded-lg shadow-xs">
+                        {dashboardSelectedUserIds.size} {dashboardSelectedUserIds.size === 1 ? "Scholar" : "Scholars"} Checked
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground hidden lg:inline">
+                        (Check scholars to dispatch certificates in bulk)
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Users className="w-4 h-4 text-primary shrink-0" />
+                    <span>
+                      Read-only scholar oversight ({filteredCohortRoster.length} scholars) • Email your cohort anytime
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  {/* Quick Filter & Select by Class */}
+                  {/* Quick Filter by Class */}
                   <div className="flex items-center gap-1">
                     <Select
                       value={staffClassFilter}
@@ -1608,7 +1991,7 @@ const Dashboard = () => {
                     </Select>
                   </div>
 
-                  {/* Quick Filter & Select by Year */}
+                  {/* Quick Filter by Year */}
                   <div className="flex items-center gap-1">
                     <Select
                       value={staffYearFilter}
@@ -1626,26 +2009,45 @@ const Dashboard = () => {
                     </Select>
                   </div>
 
-                  {/* Persistent 'Send Certificates' Action Button */}
-                  <Button
-                    size="sm"
-                    onClick={handleSendCertificatesForSelectedDashboard}
-                    disabled={dashboardSelectedUserIds.size === 0}
-                    className={cn(
-                      "h-8 px-3.5 text-xs font-bold gap-1.5 rounded-xl transition-all shadow-sm",
-                      dashboardSelectedUserIds.size > 0
-                        ? "bg-amber-500 hover:bg-amber-400 text-black border-0 shadow-amber-500/20"
-                        : "bg-muted text-muted-foreground border border-border"
-                    )}
-                    title={
-                      dashboardSelectedUserIds.size > 0
-                        ? `Dispatch official certificates to ${dashboardSelectedUserIds.size} checked scholars`
-                        : "Check students above to enable bulk certificate dispatch"
-                    }
-                  >
-                    <Award className="w-3.5 h-3.5" />
-                    <span>Send Certificates ({dashboardSelectedUserIds.size})</span>
-                  </Button>
+                  {/* Persistent 'Send Certificates' Action Button (Librarian & Admin Only) */}
+                  {isLibrarian ? (
+                    <Button
+                      size="sm"
+                      onClick={handleSendCertificatesForSelectedDashboard}
+                      disabled={dashboardSelectedUserIds.size === 0}
+                      className={cn(
+                        "h-8 px-3.5 text-xs font-bold gap-1.5 rounded-xl transition-all shadow-sm",
+                        dashboardSelectedUserIds.size > 0
+                          ? "bg-amber-500 hover:bg-amber-400 text-black border-0 shadow-amber-500/20"
+                          : "bg-muted text-muted-foreground border border-border"
+                      )}
+                      title={
+                        dashboardSelectedUserIds.size > 0
+                          ? `Dispatch official certificates to ${dashboardSelectedUserIds.size} checked scholars`
+                          : "Check students above to enable bulk certificate dispatch"
+                      }
+                    >
+                      <Award className="w-3.5 h-3.5" />
+                      <span>Send Certificates ({dashboardSelectedUserIds.size})</span>
+                    </Button>
+                  ) : (
+                    <StaffCohortBroadcastDialog
+                      staffRole={profile?.role}
+                      yearGroup={profile?.year_group}
+                      className={profile?.class_name}
+                      house={profile?.house}
+                      triggerButton={
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-8 px-3.5 text-xs font-bold gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:opacity-95 text-white border-0 shadow-sm whitespace-nowrap shrink-0"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Email Cohort</span>
+                        </Button>
+                      }
+                    />
+                  )}
 
                   {/* Persistent 'Download CSV' Action Button */}
                   <Button
@@ -1654,20 +2056,20 @@ const Dashboard = () => {
                     onClick={() => handleExportCohortCsv(false)}
                     className="h-8 px-3 text-xs font-semibold gap-1.5 rounded-xl border-border bg-card/90 hover:bg-card text-foreground transition-all shadow-2xs hover:border-emerald-500/50"
                     title={
-                      dashboardSelectedUserIds.size > 0
+                      isLibrarian && dashboardSelectedUserIds.size > 0
                         ? `Download official school CSV report for ${dashboardSelectedUserIds.size} checked scholars`
                         : `Download official school CSV report for all ${filteredCohortRoster.length} cohort scholars`
                     }
                   >
                     <Download className="w-3.5 h-3.5 text-emerald-500" />
                     <span>
-                      {dashboardSelectedUserIds.size > 0
+                      {isLibrarian && dashboardSelectedUserIds.size > 0
                         ? `Download CSV (${dashboardSelectedUserIds.size})`
                         : `Download CSV (${filteredCohortRoster.length})`}
                     </span>
                   </Button>
 
-                  {dashboardSelectedUserIds.size > 0 && (
+                  {isLibrarian && dashboardSelectedUserIds.size > 0 && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -1686,30 +2088,33 @@ const Dashboard = () => {
                   {filteredCohortRoster.map((s, idx) => {
                     const houseInfo = getHouseColor(s.house);
                     const isLongonot = s.house === 'Longonot';
-                    const isSelected = dashboardSelectedUserIds.has(s.user_id);
+                    const isSelected = isLibrarian && dashboardSelectedUserIds.has(s.user_id);
                     const lvl = computeStudentLevel(s.books);
 
                     return (
                       <div
                         key={s.user_id}
-                        onClick={() => toggleSelectOneDashboard(s.user_id)}
+                        onClick={isLibrarian ? () => toggleSelectOneDashboard(s.user_id) : undefined}
                         className={cn(
-                          "p-3.5 px-6 flex items-center justify-between gap-3 cursor-pointer transition-colors",
+                          "p-3.5 px-6 flex items-center justify-between gap-3 transition-colors",
+                          isLibrarian && "cursor-pointer",
                           isSelected
                             ? "bg-amber-500/10 dark:bg-amber-500/15 border-l-4 border-l-amber-500 font-medium"
                             : "hover:bg-muted/30"
                         )}
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
-                          {/* Bulk Select Checkbox Column */}
-                          <div onClick={(e) => e.stopPropagation()} className="shrink-0 flex items-center">
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={() => toggleSelectOneDashboard(s.user_id)}
-                              aria-label={`Select ${s.full_name}`}
-                              className="cursor-pointer"
-                            />
-                          </div>
+                          {/* Bulk Select Checkbox Column (Librarians & Admins only) */}
+                          {isLibrarian && (
+                            <div onClick={(e) => e.stopPropagation()} className="shrink-0 flex items-center">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleSelectOneDashboard(s.user_id)}
+                                aria-label={`Select ${s.full_name}`}
+                                className="cursor-pointer"
+                              />
+                            </div>
+                          )}
 
                           <div className="w-7 h-7 rounded-lg bg-muted text-xs font-bold text-muted-foreground flex items-center justify-center shrink-0">
                             #{idx + 1}
@@ -1746,30 +2151,32 @@ const Dashboard = () => {
                               {s.points} pts
                             </div>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setSelectedCertTarget({
-                                userId: s.user_id,
-                                name: s.full_name,
-                                email: s.email || `${s.full_name.toLowerCase().replace(/\s+/g, ".")}@mpesafoundationacademy.ac.ke`,
-                                house: s.house,
-                                yearGroup: s.year_group,
-                                className: s.class_name,
-                                booksCount: s.books,
-                                level: lvl,
-                                verificationCode: `MFA-CERT-${s.house ? s.house.substring(0,3).toUpperCase() : 'MFA'}-${Math.floor(1000 + Math.random() * 9000)}`,
-                              });
-                              setCertBatchTargets([]);
-                              setCertDispatchOpen(true);
-                            }}
-                            className="h-7 px-2 text-[10px] font-bold text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 gap-1 rounded-lg cursor-pointer"
-                            title="Dispatch official certificate to student"
-                          >
-                            <Award className="w-3.5 h-3.5 text-amber-500" />
-                            <span className="hidden sm:inline">Dispatch Cert</span>
-                          </Button>
+                          {isLibrarian && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedCertTarget({
+                                  userId: s.user_id,
+                                  name: s.full_name,
+                                  email: s.email || `${s.full_name.toLowerCase().replace(/\s+/g, ".")}@mpesafoundationacademy.ac.ke`,
+                                  house: s.house,
+                                  yearGroup: s.year_group,
+                                  className: s.class_name,
+                                  booksCount: s.books,
+                                  level: lvl,
+                                  verificationCode: `MFA-CERT-${s.house ? s.house.substring(0,3).toUpperCase() : 'MFA'}-${Math.floor(1000 + Math.random() * 9000)}`,
+                                });
+                                setCertBatchTargets([]);
+                                setCertDispatchOpen(true);
+                              }}
+                              className="h-7 px-2 text-[10px] font-bold text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 gap-1 rounded-lg cursor-pointer"
+                              title="Dispatch official certificate to student"
+                            >
+                              <Award className="w-3.5 h-3.5 text-amber-500" />
+                              <span className="hidden sm:inline">Dispatch Cert</span>
+                            </Button>
+                          )}
                           {s.books > 0 ? (
                             <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] font-bold">
                               Active
@@ -1857,6 +2264,68 @@ const Dashboard = () => {
                       profile={profile}
                       variant="compact-ribbon"
                     />
+                  </div>
+
+                  {/* Student Quick Access Divs (Focused & Color-Coded) */}
+                  <div className="relative z-10 rounded-2xl border border-border/70 bg-muted/25 p-3 space-y-2">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Quick Reading Portal
+                      </span>
+                      <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                        Jump straight to your tools
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                      {[
+                        {
+                          label: 'Submit Book',
+                          to: selectedChallenge?.id && selectedChallenge.id !== 'all' ? `/submit?challenge=${selectedChallenge.id}` : '/submit',
+                          icon: PlusCircle,
+                          tone: 'var(--v-electric-blue)',
+                        },
+                        { label: 'My Progress', to: '/progress', icon: BarChart3, tone: 'var(--v-cyan)' },
+                        { label: 'Leaderboard', to: '/leaderboard', icon: Trophy, tone: 'var(--v-gold)' },
+                        {
+                          label: 'Inbox',
+                          to: '/inbox',
+                          icon: Inbox,
+                          tone: 'var(--v-orange)',
+                          badge: unreadEmailCount,
+                        },
+                        { label: 'Challenges', to: '/challenges', icon: Target, tone: 'var(--v-emerald)' },
+                        { label: 'Certificates', to: '/certificates', icon: BadgeCheck, tone: 'var(--v-fuchsia)' },
+                        { label: 'Settings', to: '/settings', icon: Settings, tone: 'var(--v-mint)' },
+                      ].map((item) => (
+                        <button
+                          key={item.to}
+                          type="button"
+                          onClick={() => navigate(item.to)}
+                          className="group rounded-xl border p-2.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm flex flex-col justify-between gap-2 relative"
+                          style={{
+                            borderColor: `hsl(${item.tone} / 0.28)`,
+                            background: `linear-gradient(155deg, hsl(${item.tone} / 0.12), hsl(${item.tone} / 0.03))`,
+                          }}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span
+                              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                              style={{ background: `hsl(${item.tone} / 0.18)` }}
+                            >
+                              <item.icon className="w-3.5 h-3.5" style={{ color: `hsl(${item.tone})` }} />
+                            </span>
+                            {typeof item.badge === 'number' && item.badge > 0 && (
+                              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-red-500 text-white">
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                            {item.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* 4 Sleek Bento Metric Divs (Well-Colored Linear Gradients & Floating Divs) */}
@@ -2078,6 +2547,9 @@ const Dashboard = () => {
                   </Button>
                 </div>
               </div>
+
+              {/* Live Session Countdown & Deadline Window (Dashboard Feature) */}
+              <SessionCountdownBanner isLibrarian={false} />
 
               {/* LOWER BENTO ROW: Upcoming Reads & Submissions + Realm Progress Queue */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
@@ -2476,8 +2948,8 @@ const Dashboard = () => {
                 })}
               </div>
 
-              {/* Staff Certificate Dispatch Shortcut Banner */}
-              {isStaff && (
+              {/* Librarian & Admin Certificate Dispatch Shortcut Banner */}
+              {isLibrarian && (
                 <div className="p-3.5 rounded-2xl bg-primary/5 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -2517,7 +2989,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <CardTitle className="text-base font-bold flex items-center gap-2">
-                      Inbuilt Email &amp; Challenge Inboxes
+                      Inbuilt Reading Mail &amp; Inbox
                       <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30">
                         Academy In-App Mailbox
                       </Badge>
@@ -2632,304 +3104,307 @@ const Dashboard = () => {
         onOpenChange={(open) => !open && setSelectedWelcomeEmail(null)}
       />
 
-      {/* Admin Certificate Student Picker Dialog */}
-      <Dialog open={certStudentPickerOpen} onOpenChange={setCertStudentPickerOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-3xl border-border bg-card">
-          <DialogHeader className="p-6 pb-4 border-b border-border bg-gradient-to-r from-amber-500/10 via-primary/5 to-transparent">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-xl shadow-xs">
-                <Award className="w-5 h-5 text-amber-500" />
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-bold font-display text-foreground">
-                  Certificate Dispatch Studio
-                </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground">
-                  Select a scholar or broadcast certificates in bulk with verifiable PDF attachments delivered to student email and Challenge Inbox.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          <div className="p-5 space-y-4 flex-1 overflow-hidden flex flex-col">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-                <Input
-                  value={certSearchQuery}
-                  onChange={(e) => setCertSearchQuery(e.target.value)}
-                  placeholder="Search scholar by name, house, or year group..."
-                  className="pl-9 h-9 text-xs bg-muted/40 rounded-xl"
-                />
-              </div>
-
-              {/* Bulk Action Buttons */}
-              <div className="flex items-center gap-2 shrink-0">
-                {certPickerSelectedUserIds.size > 0 && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      const targets = cohortData.roster
-                        .filter((s) => certPickerSelectedUserIds.has(s.user_id))
-                        .map((s) => ({
-                          userId: s.user_id,
-                          name: s.full_name,
-                          email: s.email || `${s.full_name.toLowerCase().replace(/\s+/g, ".")}@mpesafoundationacademy.ac.ke`,
-                          house: s.house,
-                          yearGroup: s.year_group,
-                          className: s.class_name,
-                          booksCount: s.books,
-                          level: computeStudentLevel(s.books),
-                          verificationCode: `MFA-CERT-${s.house ? s.house.substring(0,3).toUpperCase() : 'MFA'}-${Math.floor(1000 + Math.random() * 9000)}`,
-                        }));
-
-                      setCertBatchTargets(targets);
-                      setSelectedCertTarget(null);
-                      setCertStudentPickerOpen(false);
-                      setCertDispatchOpen(true);
-                    }}
-                    className="text-xs h-9 font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-sm"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Send to Selected ({certPickerSelectedUserIds.size})</span>
-                  </Button>
-                )}
-
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => {
-                    const qualified = cohortData.roster
-                      .filter((s) => s.books >= 15)
-                      .map((s) => ({
-                        userId: s.user_id,
-                        name: s.full_name,
-                        email: s.email || `${s.full_name.toLowerCase().replace(/\s+/g, ".")}@mpesafoundationacademy.ac.ke`,
-                        house: s.house,
-                        yearGroup: s.year_group,
-                        className: s.class_name,
-                        booksCount: s.books,
-                        level: computeStudentLevel(s.books),
-                        verificationCode: `MFA-CERT-${s.house ? s.house.substring(0,3).toUpperCase() : 'MFA'}-${Math.floor(1000 + Math.random() * 9000)}`,
-                      }));
-
-                    if (qualified.length === 0) {
-                      toast.info("No scholars have reached 15 books yet. You can still dispatch individually to any scholar below.");
-                      return;
-                    }
-                    setCertBatchTargets(qualified);
-                    setSelectedCertTarget(null);
-                    setCertStudentPickerOpen(false);
-                    setCertDispatchOpen(true);
-                  }}
-                  className="text-xs h-9 font-bold bg-amber-500 hover:bg-amber-400 text-black border-0 gap-1.5 shadow-sm"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Batch (15+ Books)</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Selection toolbar bar */}
-            {(() => {
-              const filteredList = cohortData.roster.filter((s) => {
-                if (!certSearchQuery.trim()) return true;
-                const q = certSearchQuery.toLowerCase();
-                return (
-                  s.full_name.toLowerCase().includes(q) ||
-                  (s.email && s.email.toLowerCase().includes(q)) ||
-                  (s.house && s.house.toLowerCase().includes(q)) ||
-                  (s.year_group && s.year_group.toLowerCase().includes(q))
-                );
-              });
-              const allFilteredSelected = filteredList.length > 0 && filteredList.every((s) => certPickerSelectedUserIds.has(s.user_id));
-
-              return (
-                <div className="flex items-center justify-between text-xs px-2 py-1 bg-muted/40 rounded-xl border border-border/50">
-                  <label className="flex items-center gap-2 cursor-pointer font-medium text-foreground">
-                    <Checkbox
-                      checked={allFilteredSelected}
-                      onCheckedChange={() => {
-                        if (allFilteredSelected) {
-                          setCertPickerSelectedUserIds((prev) => {
-                            const next = new Set(prev);
-                            filteredList.forEach((s) => next.delete(s.user_id));
-                            return next;
-                          });
-                        } else {
-                          setCertPickerSelectedUserIds((prev) => {
-                            const next = new Set(prev);
-                            filteredList.forEach((s) => next.add(s.user_id));
-                            return next;
-                          });
-                        }
-                      }}
-                    />
-                    <span>{allFilteredSelected ? "Deselect All Visible" : `Select All Visible (${filteredList.length})`}</span>
-                  </label>
-                  {certPickerSelectedUserIds.size > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setCertPickerSelectedUserIds(new Set())}
-                      className="text-[11px] text-muted-foreground hover:text-foreground"
-                    >
-                      Clear Selection ({certPickerSelectedUserIds.size})
-                    </button>
-                  )}
+      {/* Admin & Librarian Certificate Student Picker Dialog */}
+      {isLibrarian && (
+        <>
+          <Dialog open={certStudentPickerOpen} onOpenChange={setCertStudentPickerOpen}>
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-3xl border-border bg-card">
+              <DialogHeader className="p-6 pb-4 border-b border-border bg-gradient-to-r from-amber-500/10 via-primary/5 to-transparent">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-xl shadow-xs">
+                    <Award className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-lg font-bold font-display text-foreground">
+                      Certificate Dispatch Studio
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground">
+                      Select a scholar or broadcast certificates in bulk with verifiable PDF attachments delivered to student email and Challenge Inbox.
+                    </DialogDescription>
+                  </div>
                 </div>
-              );
-            })()}
+              </DialogHeader>
 
-            {/* Scholars List */}
-            <div className="border border-border/70 rounded-2xl overflow-y-auto max-h-[380px] divide-y divide-border/50">
-              {cohortData.roster
-                .filter((s) => {
-                  if (!certSearchQuery.trim()) return true;
-                  const q = certSearchQuery.toLowerCase();
-                  return (
-                    s.full_name.toLowerCase().includes(q) ||
-                    (s.email && s.email.toLowerCase().includes(q)) ||
-                    (s.house && s.house.toLowerCase().includes(q)) ||
-                    (s.year_group && s.year_group.toLowerCase().includes(q))
-                  );
-                })
-                .map((st) => {
-                  const lvl = computeStudentLevel(st.books);
-                  const isSelected = certPickerSelectedUserIds.has(st.user_id);
-                  return (
-                    <div
-                      key={st.user_id}
+              <div className="p-5 space-y-4 flex-1 overflow-hidden flex flex-col">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Input
+                      value={certSearchQuery}
+                      onChange={(e) => setCertSearchQuery(e.target.value)}
+                      placeholder="Search scholar by name, house, or year group..."
+                      className="pl-9 h-9 text-xs bg-muted/40 rounded-xl"
+                    />
+                  </div>
+
+                  {/* Bulk Action Buttons */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {certPickerSelectedUserIds.size > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          const targets = cohortData.roster
+                            .filter((s) => certPickerSelectedUserIds.has(s.user_id))
+                            .map((s) => ({
+                              userId: s.user_id,
+                              name: s.full_name,
+                              email: s.email || `${s.full_name.toLowerCase().replace(/\s+/g, ".")}@mpesafoundationacademy.ac.ke`,
+                              house: s.house,
+                              yearGroup: s.year_group,
+                              className: s.class_name,
+                              booksCount: s.books,
+                              level: computeStudentLevel(s.books),
+                              verificationCode: `MFA-CERT-${s.house ? s.house.substring(0,3).toUpperCase() : 'MFA'}-${Math.floor(1000 + Math.random() * 9000)}`,
+                            }));
+
+                          setCertBatchTargets(targets);
+                          setSelectedCertTarget(null);
+                          setCertStudentPickerOpen(false);
+                          setCertDispatchOpen(true);
+                        }}
+                        className="text-xs h-9 font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-sm"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send to Selected ({certPickerSelectedUserIds.size})</span>
+                      </Button>
+                    )}
+
+                    <Button
+                      type="button"
+                      size="sm"
                       onClick={() => {
-                        setCertPickerSelectedUserIds((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(st.user_id)) next.delete(st.user_id);
-                          else next.add(st.user_id);
-                          return next;
-                        });
+                        const qualified = cohortData.roster
+                          .filter((s) => s.books >= 15)
+                          .map((s) => ({
+                            userId: s.user_id,
+                            name: s.full_name,
+                            email: s.email || `${s.full_name.toLowerCase().replace(/\s+/g, ".")}@mpesafoundationacademy.ac.ke`,
+                            house: s.house,
+                            yearGroup: s.year_group,
+                            className: s.class_name,
+                            booksCount: s.books,
+                            level: computeStudentLevel(s.books),
+                            verificationCode: `MFA-CERT-${s.house ? s.house.substring(0,3).toUpperCase() : 'MFA'}-${Math.floor(1000 + Math.random() * 9000)}`,
+                          }));
+
+                        if (qualified.length === 0) {
+                          toast.info("No scholars have reached 15 books yet. You can still dispatch individually to any scholar below.");
+                          return;
+                        }
+                        setCertBatchTargets(qualified);
+                        setSelectedCertTarget(null);
+                        setCertStudentPickerOpen(false);
+                        setCertDispatchOpen(true);
                       }}
-                      className={cn(
-                        "p-3.5 px-4 flex items-center justify-between gap-3 cursor-pointer transition-colors",
-                        isSelected ? "bg-amber-500/10 dark:bg-amber-500/15 border-l-4 border-l-amber-500" : "hover:bg-muted/40"
-                      )}
+                      className="text-xs h-9 font-bold bg-amber-500 hover:bg-amber-400 text-black border-0 gap-1.5 shadow-sm"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => {
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Batch (15+ Books)</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Selection toolbar bar */}
+                {(() => {
+                  const filteredList = cohortData.roster.filter((s) => {
+                    if (!certSearchQuery.trim()) return true;
+                    const q = certSearchQuery.toLowerCase();
+                    return (
+                      s.full_name.toLowerCase().includes(q) ||
+                      (s.email && s.email.toLowerCase().includes(q)) ||
+                      (s.house && s.house.toLowerCase().includes(q)) ||
+                      (s.year_group && s.year_group.toLowerCase().includes(q))
+                    );
+                  });
+                  const allFilteredSelected = filteredList.length > 0 && filteredList.every((s) => certPickerSelectedUserIds.has(s.user_id));
+
+                  return (
+                    <div className="flex items-center justify-between text-xs px-2 py-1 bg-muted/40 rounded-xl border border-border/50">
+                      <label className="flex items-center gap-2 cursor-pointer font-medium text-foreground">
+                        <Checkbox
+                          checked={allFilteredSelected}
+                          onCheckedChange={() => {
+                            if (allFilteredSelected) {
                               setCertPickerSelectedUserIds((prev) => {
                                 const next = new Set(prev);
-                                if (next.has(st.user_id)) next.delete(st.user_id);
-                                else next.add(st.user_id);
+                                filteredList.forEach((s) => next.delete(s.user_id));
                                 return next;
                               });
-                            }}
-                          />
-                        </div>
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
-                          {st.full_name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-semibold text-xs text-foreground truncate flex items-center gap-2">
-                            <span>{st.full_name}</span>
-                            {st.house && (
-                              <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-border">
-                                {st.house}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground truncate">
-                            {st.email || `${st.full_name.toLowerCase().replace(/\s+/g, ".")}@mpesafoundationacademy.ac.ke`} {st.year_group ? `• ${st.year_group}` : ""}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <div className="text-right">
-                          <div className="text-xs font-bold text-primary">
-                            {st.books} books
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-[9px] py-0 px-1.5 font-bold uppercase",
-                              lvl === "Gold"
-                                ? "border-amber-500 text-amber-500 bg-amber-500/10"
-                                : lvl === "Silver"
-                                ? "border-slate-400 text-slate-300 bg-slate-500/10"
-                                : lvl === "Bronze"
-                                ? "border-orange-500 text-orange-500 bg-orange-500/10"
-                                : "border-muted-foreground/30 text-muted-foreground"
-                            )}
-                          >
-                            {lvl}
-                          </Badge>
-                        </div>
-
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setSelectedCertTarget({
-                              userId: st.user_id,
-                              name: st.full_name,
-                              email: st.email || `${st.full_name.toLowerCase().replace(/\s+/g, ".")}@mpesafoundationacademy.ac.ke`,
-                              house: st.house,
-                              yearGroup: st.year_group,
-                              className: st.class_name,
-                              booksCount: st.books,
-                              level: lvl,
-                              verificationCode: `MFA-CERT-${st.house ? st.house.substring(0,3).toUpperCase() : 'MFA'}-${Math.floor(1000 + Math.random() * 9000)}`,
-                            });
-                            setCertBatchTargets([]);
-                            setCertStudentPickerOpen(false);
-                            setCertDispatchOpen(true);
+                            } else {
+                              setCertPickerSelectedUserIds((prev) => {
+                                const next = new Set(prev);
+                                filteredList.forEach((s) => next.add(s.user_id));
+                                return next;
+                              });
+                            }
                           }}
-                          className="h-8 text-xs font-bold px-3 gap-1.5 bg-primary text-primary-foreground hover:opacity-90"
+                        />
+                        <span>{allFilteredSelected ? "Deselect All Visible" : `Select All Visible (${filteredList.length})`}</span>
+                      </label>
+                      {certPickerSelectedUserIds.size > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setCertPickerSelectedUserIds(new Set())}
+                          className="text-[11px] text-muted-foreground hover:text-foreground"
                         >
-                          <Send className="w-3 h-3" />
-                          <span>Dispatch</span>
-                        </Button>
-                      </div>
+                          Clear Selection ({certPickerSelectedUserIds.size})
+                        </button>
+                      )}
                     </div>
                   );
-                })}
-            </div>
-          </div>
+                })()}
 
-          <DialogFooter className="p-4 px-6 border-t border-border bg-muted/20">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setCertStudentPickerOpen(false)}
-              className="text-xs ml-auto"
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                {/* Scholars List */}
+                <div className="border border-border/70 rounded-2xl overflow-y-auto max-h-[380px] divide-y divide-border/50">
+                  {cohortData.roster
+                    .filter((s) => {
+                      if (!certSearchQuery.trim()) return true;
+                      const q = certSearchQuery.toLowerCase();
+                      return (
+                        s.full_name.toLowerCase().includes(q) ||
+                        (s.email && s.email.toLowerCase().includes(q)) ||
+                        (s.house && s.house.toLowerCase().includes(q)) ||
+                        (s.year_group && s.year_group.toLowerCase().includes(q))
+                      );
+                    })
+                    .map((st) => {
+                      const lvl = computeStudentLevel(st.books);
+                      const isSelected = certPickerSelectedUserIds.has(st.user_id);
+                      return (
+                        <div
+                          key={st.user_id}
+                          onClick={() => {
+                            setCertPickerSelectedUserIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(st.user_id)) next.delete(st.user_id);
+                              else next.add(st.user_id);
+                              return next;
+                            });
+                          }}
+                          className={cn(
+                            "p-3.5 px-4 flex items-center justify-between gap-3 cursor-pointer transition-colors",
+                            isSelected ? "bg-amber-500/10 dark:bg-amber-500/15 border-l-4 border-l-amber-500" : "hover:bg-muted/40"
+                          )}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => {
+                                  setCertPickerSelectedUserIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(st.user_id)) next.delete(st.user_id);
+                                    else next.add(st.user_id);
+                                    return next;
+                                  });
+                                }}
+                              />
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                              {st.full_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-semibold text-xs text-foreground truncate flex items-center gap-2">
+                                <span>{st.full_name}</span>
+                                {st.house && (
+                                  <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-border">
+                                    {st.house}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground truncate">
+                                {st.email || `${st.full_name.toLowerCase().replace(/\s+/g, ".")}@mpesafoundationacademy.ac.ke`} {st.year_group ? `• ${st.year_group}` : ""}
+                              </div>
+                            </div>
+                          </div>
 
-      {/* Official Certificate Dispatch Modal with Live Preview and PDF Attachment */}
-      <CertificateDispatchModal
-        open={certDispatchOpen}
-        onOpenChange={setCertDispatchOpen}
-        target={selectedCertTarget}
-        batchTargets={certBatchTargets}
-        challengeTitle={selectedChallenge?.title || '45-Book Reading Challenge'}
-        challengeId={selectedChallenge?.id || '45450000-2025-4026-8000-000000000045'}
-        signatoryName={profile?.full_name || "Tonny Odundo"}
-        signatoryTitle="Head Librarian & Director of Literacy"
-        onDownloadPDF={(target) => {
-          // Export verifiable certificate document
-          toast.success(`Generated official PDF Certificate for ${target.name}!`);
-        }}
-        onSuccess={() => {
-          setCertDispatchOpen(false);
-          toast.success("Certificate dispatched across all student channels and logged in Challenge Inbox!");
-        }}
-      />
+                          <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <div className="text-right">
+                              <div className="text-xs font-bold text-primary">
+                                {st.books} books
+                              </div>
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-[9px] py-0 px-1.5 font-bold uppercase",
+                                  lvl === "Gold"
+                                    ? "border-amber-500 text-amber-500 bg-amber-500/10"
+                                    : lvl === "Silver"
+                                    ? "border-slate-400 text-slate-300 bg-slate-500/10"
+                                    : lvl === "Bronze"
+                                    ? "border-orange-500 text-orange-500 bg-orange-500/10"
+                                    : "border-muted-foreground/30 text-muted-foreground"
+                                )}
+                              >
+                                {lvl}
+                              </Badge>
+                            </div>
+
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setSelectedCertTarget({
+                                  userId: st.user_id,
+                                  name: st.full_name,
+                                  email: st.email || `${st.full_name.toLowerCase().replace(/\s+/g, ".")}@mpesafoundationacademy.ac.ke`,
+                                  house: st.house,
+                                  yearGroup: st.year_group,
+                                  className: st.class_name,
+                                  booksCount: st.books,
+                                  level: lvl,
+                                  verificationCode: `MFA-CERT-${st.house ? st.house.substring(0,3).toUpperCase() : 'MFA'}-${Math.floor(1000 + Math.random() * 9000)}`,
+                                });
+                                setCertBatchTargets([]);
+                                setCertStudentPickerOpen(false);
+                                setCertDispatchOpen(true);
+                              }}
+                              className="h-8 text-xs font-bold px-3 gap-1.5 bg-primary text-primary-foreground hover:opacity-90"
+                            >
+                              <Send className="w-3 h-3" />
+                              <span>Dispatch</span>
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              <DialogFooter className="p-4 px-6 border-t border-border bg-muted/20">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCertStudentPickerOpen(false)}
+                  className="text-xs ml-auto"
+                >
+                  Close
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Official Certificate Dispatch Modal with Live Preview and PDF Attachment */}
+          <CertificateDispatchModal
+            open={certDispatchOpen}
+            onOpenChange={setCertDispatchOpen}
+            target={selectedCertTarget}
+            batchTargets={certBatchTargets}
+            challengeTitle={selectedChallenge?.title || '45-Book Reading Challenge'}
+            challengeId={selectedChallenge?.id || '45450000-2025-4026-8000-000000000045'}
+            signatoryName={profile?.full_name || "Tonny Odundo"}
+            signatoryTitle="Head Librarian & Director of Literacy"
+            onDownloadPDF={(target) => {
+              toast.success(`Generated official PDF Certificate for ${target.name}!`);
+            }}
+            onSuccess={() => {
+              setCertDispatchOpen(false);
+              toast.success("Certificate dispatched across all student channels and logged in Inbox!");
+            }}
+          />
+        </>
+      )}
 
     </div>
   );

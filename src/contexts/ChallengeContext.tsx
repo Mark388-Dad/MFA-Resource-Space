@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { publishBroadcast } from "@/lib/broadcastManager";
 import { saveLocalRegistration, getLocalRegistrations } from "@/lib/challengeRegistrationManager";
-import { STANDARD_ACCESS_CODES, validateAccessCode } from "@/lib/accessCodes";
+import { STANDARD_ACCESS_CODES, validateAccessCode, recordAccessCodeUse, saveCustomCodeLocal } from "@/lib/accessCodes";
+import { createWelcomeEmail } from "@/lib/challengeRegistrationManager";
 import ChallengeAccessCodeDialog from "@/components/ChallengeAccessCodeDialog";
 import { safeStorage } from "@/lib/safeStorage";
 
@@ -51,6 +52,7 @@ export interface Challenge {
   level_milestones?: { bronze?: number; silver?: number; gold?: number };
   submission_guidelines?: string;
   google_sheet_url?: string;
+  access_code?: string;
   created_at?: string;
   created_by?: string;
 }
@@ -280,6 +282,7 @@ interface ChallengeContextType {
   broadcastChallengeToAll: (challengeId: string) => Promise<boolean>;
   isRegistered: (challengeId: string) => boolean;
   registerForChallenge: (challengeId: string) => Promise<boolean>;
+  registerDirectForChallenge: (challengeId: string) => Promise<boolean>;
   joinChallengeWithCode: (challengeId: string, code: string) => Promise<{ ok: boolean; message: string }>;
   registeredChallengeIds: string[];
 }
@@ -342,11 +345,78 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Without a code, joining opens the access-code prompt
   const registerForChallenge = useCallback(
     async (challengeId: string) => {
-      if (registeredChallengeIds.includes(challengeId)) return true;
+      if (isRegistered(challengeId)) return true;
       setCodePromptId(challengeId);
       return false;
     },
-    [registeredChallengeIds]
+    [isRegistered]
+  );
+
+  // Instant direct registration used by "Join Challenge Directly" in ChallengeAccessCodeDialog
+  const registerDirectForChallenge = useCallback(
+    async (challengeId: string): Promise<boolean> => {
+      if (!challengeId) return false;
+      const norm = normalizeChallengeId(challengeId);
+      const targetUserId = user?.id || profile?.user_id || "current_user";
+      const targetChallenge = challenges.find((c) => c.id === challengeId || c.id === norm);
+
+      if (user?.id) {
+        try {
+          const { data: existing } = await supabase
+            .from("challenge_participants")
+            .select("id")
+            .eq("user_id", user.id)
+            .in("challenge_id", [challengeId, norm])
+            .maybeSingle();
+
+          if (!existing) {
+            await supabase.from("challenge_participants").insert({
+              user_id: user.id,
+              challenge_id: norm,
+              joined_at: new Date().toISOString(),
+              books_completed: 0,
+            });
+          }
+        } catch (err) {
+          console.warn("Direct join DB insert note:", err);
+        }
+      }
+
+      saveLocalRegistration(targetUserId, challengeId);
+      if (norm !== challengeId) saveLocalRegistration(targetUserId, norm);
+
+      const stored = safeStorage.getJSON<string[]>("mfa_registered_challenges", []);
+      if (!stored.includes(norm)) {
+        stored.push(norm);
+        safeStorage.setJSON("mfa_registered_challenges", stored);
+      }
+
+      setRegisteredChallengeIds((prev) => Array.from(new Set([...prev, challengeId, norm])));
+
+      await createWelcomeEmail({
+        userId: targetUserId,
+        userEmail: profile?.email || user?.email || "",
+        studentName: profile?.full_name || user?.email?.split("@")[0] || "Scholar",
+        challengeId: norm,
+        challengeTitle: targetChallenge?.title || "Reading Challenge",
+        house: profile?.house || "Kenya",
+        yearGroup: profile?.year_group || "Grade 11",
+        targetBooks: targetChallenge?.target_books ?? 45,
+        pointsReward: targetChallenge?.points_reward ?? 450,
+      });
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("mfa-challenge-registration-changed", {
+            detail: { userId: targetUserId, challengeId: norm, status: "registered" },
+          })
+        );
+        window.dispatchEvent(new CustomEvent("mfa_registered_challenges_updated"));
+        window.dispatchEvent(new CustomEvent("mfa_challenge_participants_updated"));
+      }
+      return true;
+    },
+    [user?.id, user?.email, profile, challenges]
   );
 
   const joinChallengeWithCode = useCallback(
@@ -363,7 +433,7 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         targetChallenge?.access_code &&
         targetChallenge.access_code.trim().toUpperCase() === cleanCode;
 
-      // Check access code validity across standard & database codes with full role restrictions
+      // Check access code validity across standard, custom & database codes with full role restrictions
       const validation = isChallengeSpecific
         ? { valid: true, message: `Access code verified for "${targetChallenge?.title || "Challenge"}"` }
         : await validateAccessCode(cleanCode, profile?.role || "student");
@@ -371,6 +441,9 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (!validation.valid) {
         return { ok: false, message: validation.message || "Invalid access code. Please check with your librarian or homeroom tutor." };
       }
+
+      // Increment access code usage count cleanly
+      await recordAccessCodeUse(cleanCode);
 
       // Persist participant registration cleanly into database and local storage
       const targetUserId = user?.id || profile?.user_id || "current_user";
@@ -402,20 +475,38 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (norm !== challengeId) {
         saveLocalRegistration(targetUserId, norm);
       }
+      const stored = safeStorage.getJSON<string[]>("mfa_registered_challenges", []);
+      if (!stored.includes(norm)) {
+        stored.push(norm);
+        safeStorage.setJSON("mfa_registered_challenges", stored);
+      }
       setRegisteredChallengeIds((prev) => [...new Set([...prev, challengeId, norm])]);
+
+      await createWelcomeEmail({
+        userId: targetUserId,
+        userEmail: profile?.email || user?.email || "",
+        studentName: profile?.full_name || user?.email?.split("@")[0] || "Scholar",
+        challengeId: norm,
+        challengeTitle: targetChallenge?.title || "Reading Challenge",
+        house: profile?.house || "Kenya",
+        yearGroup: profile?.year_group || "Grade 11",
+        targetBooks: targetChallenge?.target_books ?? 45,
+        pointsReward: targetChallenge?.points_reward ?? 450,
+      });
 
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("mfa-challenge-registration-changed", {
-            detail: { userId: targetUserId, challengeId, status: "registered" },
+            detail: { userId: targetUserId, challengeId: norm, status: "registered" },
           })
         );
+        window.dispatchEvent(new CustomEvent("mfa_registered_challenges_updated"));
         window.dispatchEvent(new CustomEvent("mfa_challenge_participants_updated"));
       }
 
       return { ok: true, message: validation.message || "Access code verified successfully! Welcome to the challenge." };
     },
-    [user?.id, profile?.role, profile?.user_id, challenges]
+    [user?.id, user?.email, profile, challenges]
   );
 
   const setSelectedChallengeId = useCallback((id: string) => {
@@ -470,7 +561,9 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             category: String(d.category || "General"),
             badge_name: String(d.badge_name || "Reading Star"),
             badge_icon: String(d.badge_icon || "🏅"),
+            logo_url: d.logo_url ? String(d.logo_url) : (typeof layout.logo_url === "string" ? layout.logo_url : undefined),
             accent_color: d.accent_color ? String(d.accent_color) : null,
+            access_code: typeof layout.access_code === "string" ? layout.access_code : undefined,
             created_at: d.created_at ? String(d.created_at) : undefined,
             created_by: d.created_by ? String(d.created_by) : undefined,
             allowed_houses: Array.isArray(d.allowed_houses) ? d.allowed_houses : null,
@@ -550,20 +643,51 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         { event: "*", schema: "public", table: "challenge_participants" },
         () => {
           if (user?.id) {
+            const local = getLocalRegistrations(user.id);
             supabase
               .from("challenge_participants")
               .select("challenge_id")
               .eq("user_id", user.id)
               .then(({ data }) => {
-                setRegisteredChallengeIds((data || []).map((d) => d.challenge_id));
+                const dbIds = (data || []).map((d) => d.challenge_id);
+                setRegisteredChallengeIds(Array.from(new Set([...local, ...dbIds])));
               });
           }
         }
       )
       .subscribe();
 
+    const realtimeFeed = supabase
+      .channel("mfa_challenge_context_status_feed")
+      .on("broadcast", { event: "status_changed" }, (payload) => {
+        if (payload?.payload?.id && payload?.payload?.status) {
+          const id = String(payload.payload.id);
+          const status = payload.payload.status as ChallengeStatus;
+          safeStorage.setItem(`mfa_challenge_status_${id}`, status);
+          setChallenges((prev) =>
+            prev.map((c) => (c.id === id ? { ...c, status, is_active: status !== "closed" } : c))
+          );
+        }
+      })
+      .subscribe();
+
+    const handleLocalStatusChanged = (e: Event) => {
+      const detail = (e as CustomEvent<{ id?: string; status?: ChallengeStatus }>).detail;
+      if (detail?.id && detail?.status) {
+        const isAct = detail.status !== "closed";
+        setChallenges((prev) =>
+          prev.map((c) =>
+            c.id === detail.id ? { ...c, status: detail.status!, is_active: isAct } : c
+          )
+        );
+      }
+    };
+    window.addEventListener("mfa_challenge_status_changed", handleLocalStatusChanged);
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(realtimeFeed);
+      window.removeEventListener("mfa_challenge_status_changed", handleLocalStatusChanged);
     };
   }, [loadChallenges, user?.id]);
 
@@ -638,11 +762,11 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!selectedChallenge || typeof document === "undefined") return;
 
     const accentMap: Record<string, string> = {
-      "45450000-2025-4026-8000-000000000045": "45 100% 52%", // Gold
-      "challenge-african-voices": "152 80% 45%", // Emerald
-      "challenge-stem-nonfiction": "212 100% 56%", // Electric Blue
-      "challenge-junior-graphic": "320 90% 58%", // Magenta
-      "all": "212 100% 56%",
+      [MAIN_CHALLENGE_ID]: "45 100% 52%", // Gold
+      [AFRICAN_VOICES_CHALLENGE_ID]: "152 80% 45%", // Emerald
+      [STEM_CHALLENGE_ID]: "212 100% 56%", // Electric Blue
+      [GRAPHIC_NOVELS_CHALLENGE_ID]: "320 90% 58%", // Magenta
+      all: "212 100% 56%",
     };
 
     let colorHsl = accentMap[selectedChallenge.id];
@@ -693,14 +817,31 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const layout = await mergeLayout(id, { status });
       await supabase.from("challenges").update({ is_active: isActive, layout_config: layout as any }).eq("id", id);
       if (id === MAIN_CHALLENGE_ID) {
-        await supabase.from("system_settings").upsert({ setting_key: "reading_challenge_active", setting_value: status === "open" ? "true" : "false" });
+        await supabase
+          .from("system_settings")
+          .upsert(
+            {
+              setting_key: "reading_challenge_active",
+              setting_value: status === "open" ? "true" : "false",
+              description: "Master switch to allow or pause reading challenge submissions across the academy",
+            },
+            { onConflict: "setting_key" }
+          );
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("mfa_session_settings_updated"));
+        }
       }
       // Broadcast over Supabase Realtime so other devices and tabs update in real time
       const realtimeChannel = supabase.channel("mfa_challenge_realtime_feed");
-      realtimeChannel.send({
-        type: "broadcast",
-        event: "status_changed",
-        payload: { id, status, timestamp: Date.now() },
+      realtimeChannel.subscribe((state) => {
+        if (state === "SUBSCRIBED") {
+          realtimeChannel.send({
+            type: "broadcast",
+            event: "status_changed",
+            payload: { id, status, timestamp: Date.now() },
+          });
+          setTimeout(() => supabase.removeChannel(realtimeChannel), 800);
+        }
       });
     } catch (e) {
       console.warn("Could not sync remote challenge status (saved locally):", e);
@@ -712,6 +853,7 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!authUser) { toast.error("Please sign in again"); throw new Error("Not signed in"); }
     const status = data.status || "open";
     const today = new Date().toISOString().slice(0, 10);
+    const cleanAccessCode = data.access_code?.trim().toUpperCase() || undefined;
     const { data: row, error } = await supabase.from("challenges").insert({
       title: data.title?.trim() || "New Challenge",
       description: data.description || "",
@@ -725,6 +867,7 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       category: data.category || "Literature",
       badge_name: data.badge_name || "Scholar",
       badge_icon: data.badge_icon || "🏆",
+      logo_url: data.logo_url || null,
       accent_color: data.accent_color || null,
       allowed_houses: data.allowed_houses?.length ? data.allowed_houses : null,
       allowed_year_groups: data.allowed_year_groups?.length ? data.allowed_year_groups : null,
@@ -744,23 +887,54 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         features: data.features || [],
         level_milestones: data.level_milestones,
         google_sheet_url: data.google_sheet_url || "",
+        logo_url: data.logo_url || "",
+        access_code: cleanAccessCode || "",
       } as any,
     }).select("id").single();
     if (error || !row) {
       toast.error(`Could not create challenge: ${error?.message || "unknown error"}`);
       throw error || new Error("Create failed");
     }
+    if (cleanAccessCode) {
+      saveCustomCodeLocal({
+        code: cleanAccessCode,
+        code_type: "student",
+        role_restriction: "all",
+        max_uses: 2000,
+        current_uses: 0,
+        is_active: true,
+        school_name: "Mpesa Foundation Academy",
+        description: `Challenge Access Code for "${data.title?.trim() || "Challenge"}"`,
+      });
+      await supabase.from("access_codes").insert({
+        code: cleanAccessCode,
+        code_type: "student",
+        role_restriction: "all",
+        max_uses: 2000,
+        current_uses: 0,
+        is_active: true,
+        created_by: authUser.id,
+        school_name: "Mpesa Foundation Academy",
+      }).then(() => {});
+    }
     if (data.google_sheet_url) {
       safeStorage.setItem(`mfa_challenge_sheets_${row.id}`, data.google_sheet_url);
     }
+    safeStorage.setItem(`mfa_challenge_status_${row.id}`, status);
     await loadChallenges();
     toast.success(`Challenge "${data.title}" created`);
-    return { ...(data as Challenge), id: row.id, status, is_active: status !== "closed" };
+    return { ...(data as Challenge), id: row.id, status, is_active: status !== "closed", access_code: cleanAccessCode };
   }, [loadChallenges]);
 
   const updateChallenge = useCallback(async (id: string, patch: Partial<Challenge>) => {
     const layoutPatch: Record<string, unknown> = {};
-    if (patch.status) layoutPatch.status = patch.status;
+    if (patch.status) {
+      layoutPatch.status = patch.status;
+      safeStorage.setItem(`mfa_challenge_status_${id}`, patch.status);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("mfa_challenge_status_changed", { detail: { id, status: patch.status } }));
+      }
+    }
     if (patch.submission_type) layoutPatch.submission_type = patch.submission_type;
     if (patch.submission_guidelines !== undefined) layoutPatch.submission_guidelines = patch.submission_guidelines;
     if (patch.points_per_book) layoutPatch.points_per_book = patch.points_per_book;
@@ -768,12 +942,29 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (patch.max_books_per_category) layoutPatch.max_books_per_category = patch.max_books_per_category;
     if (patch.min_reflection_chars) layoutPatch.min_reflection_chars = patch.min_reflection_chars;
     if (patch.level_milestones) layoutPatch.level_milestones = patch.level_milestones;
+    if (patch.logo_url !== undefined) layoutPatch.logo_url = patch.logo_url;
+    if (patch.access_code !== undefined) {
+      const cleanAccess = patch.access_code.trim().toUpperCase();
+      layoutPatch.access_code = cleanAccess;
+      if (cleanAccess) {
+        saveCustomCodeLocal({
+          code: cleanAccess,
+          code_type: "student",
+          role_restriction: "all",
+          max_uses: 2000,
+          current_uses: 0,
+          is_active: true,
+          school_name: "Mpesa Foundation Academy",
+          description: `Challenge Access Code for "${patch.title || "Challenge"}"`,
+        });
+      }
+    }
     if (patch.google_sheet_url !== undefined) {
       layoutPatch.google_sheet_url = patch.google_sheet_url;
       safeStorage.setItem(`mfa_challenge_sheets_${id}`, patch.google_sheet_url);
     }
     const update: Record<string, unknown> = {};
-    for (const k of ["title","description","target_books","points_reward","is_active","start_date","end_date","badge_icon","badge_name","category","is_featured","accent_color"] as const) {
+    for (const k of ["title","description","target_books","points_reward","is_active","start_date","end_date","badge_icon","badge_name","category","is_featured","accent_color","logo_url"] as const) {
       if ((patch as any)[k] !== undefined) update[k] = (patch as any)[k];
     }
     if (Object.keys(layoutPatch).length) update.layout_config = await mergeLayout(id, layoutPatch);
@@ -904,6 +1095,7 @@ export const ChallengeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         broadcastChallengeToAll,
         isRegistered,
         registerForChallenge,
+        registerDirectForChallenge,
         joinChallengeWithCode,
         registeredChallengeIds,
       }}

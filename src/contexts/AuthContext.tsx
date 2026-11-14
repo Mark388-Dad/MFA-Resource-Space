@@ -3,25 +3,40 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { safeStorage } from '@/lib/safeStorage';
 
+export type DemoRoleKey =
+  | 'librarian'
+  | 'admin'
+  | 'student'
+  | 'head_of_year'
+  | 'house_patron'
+  | 'homeroom_tutor'
+  | 'staff';
+
 export interface DemoAccountSpec {
   id: string;
   email: string;
   password: string;
   full_name: string;
-  role: 'admin' | 'librarian';
+  role: DemoRoleKey;
   label: string;
   description: string;
+  year_group: string | null;
+  class_name: string | null;
+  house: 'Kenya' | 'Longonot' | 'Kilimanjaro' | 'Elgon' | null;
 }
 
-export const DEMO_ADMIN_LIBRARIAN_ACCOUNTS: Record<'librarian' | 'admin', DemoAccountSpec> = {
+export const DEMO_ACCOUNTS: Record<DemoRoleKey, DemoAccountSpec> = {
   librarian: {
     id: '00000000-0000-4000-8000-000000000001',
     email: 'librarian.demo@mpesafoundationacademy.ac.ke',
     password: 'LibrarianDemo@2026',
     full_name: 'Academy Head Librarian (Demo)',
     role: 'librarian',
-    label: 'Head Librarian Demo',
-    description: 'Full Librarian Command Center, submissions audit, certificates & broadcasts',
+    label: 'Head Librarian',
+    description: 'Full Librarian & Admin Command Center, submissions, certificates & broadcasts',
+    year_group: null,
+    class_name: null,
+    house: null,
   },
   admin: {
     id: '00000000-0000-4000-8000-000000000002',
@@ -29,10 +44,76 @@ export const DEMO_ADMIN_LIBRARIAN_ACCOUNTS: Record<'librarian' | 'admin', DemoAc
     password: 'AdminDemo@2026',
     full_name: 'Academy Administrator (Demo)',
     role: 'admin',
-    label: 'Academy Admin Demo',
-    description: 'Full Admin Command Center, challenge controls, staff & student governance',
+    label: 'Academy Admin',
+    description: 'Unified Head Librarian & Admin workspace with full school governance',
+    year_group: null,
+    class_name: null,
+    house: null,
+  },
+  student: {
+    id: '00000000-0000-4000-8000-000000000003',
+    email: 'student.demo@mpesafoundationacademy.ac.ke',
+    password: 'StudentDemo@2026',
+    full_name: 'Amani Wanjiku (Demo Student)',
+    role: 'student',
+    label: 'Student Scholar',
+    description: 'Student reading portal: log books, track progress, leaderboard & inbox',
+    year_group: 'DP1',
+    class_name: 'Swara',
+    house: 'Kenya',
+  },
+  head_of_year: {
+    id: '00000000-0000-4000-8000-000000000004',
+    email: 'hoy.demo@mpesafoundationacademy.ac.ke',
+    password: 'HoyDemo@2026',
+    full_name: 'Dr. Grace Muthoni (Demo HOY)',
+    role: 'head_of_year',
+    label: 'Head of Year (DP1)',
+    description: 'DP1 academic cohort oversight, year-group leaderboard & student roster',
+    year_group: 'DP1',
+    class_name: null,
+    house: null,
+  },
+  house_patron: {
+    id: '00000000-0000-4000-8000-000000000005',
+    email: 'patron.demo@mpesafoundationacademy.ac.ke',
+    password: 'PatronDemo@2026',
+    full_name: 'Samuel Kiprop (Demo Patron)',
+    role: 'house_patron',
+    label: 'House Patron (Kenya)',
+    description: 'Kenya House reading standings, points & house member progress',
+    year_group: null,
+    class_name: null,
+    house: 'Kenya',
+  },
+  homeroom_tutor: {
+    id: '00000000-0000-4000-8000-000000000006',
+    email: 'tutor.demo@mpesafoundationacademy.ac.ke',
+    password: 'TutorDemo@2026',
+    full_name: 'Faith Njeri (Demo Tutor)',
+    role: 'homeroom_tutor',
+    label: 'Homeroom Tutor (DP1 Swara)',
+    description: 'DP1 Swara class reading logs, student tracking & cohort broadcasts',
+    year_group: 'DP1',
+    class_name: 'Swara',
+    house: null,
+  },
+  staff: {
+    id: '00000000-0000-4000-8000-000000000007',
+    email: 'staff.demo@mpesafoundationacademy.ac.ke',
+    password: 'StaffDemo@2026',
+    full_name: 'David Ochieng (Demo Staff)',
+    role: 'staff',
+    label: 'Faculty / Other Staff',
+    description: 'Whole-school faculty reading overview, house standings & leaderboard',
+    year_group: null,
+    class_name: null,
+    house: null,
   },
 };
+
+// Backward-compatible alias
+export const DEMO_ADMIN_LIBRARIAN_ACCOUNTS = DEMO_ACCOUNTS;
 
 const DEMO_SESSION_KEY = 'mfa_demo_session';
 
@@ -55,7 +136,7 @@ interface AuthContextType {
   isDemoSession: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  signInAsDemo: (role: 'admin' | 'librarian') => Profile;
+  signInAsDemo: (role: DemoRoleKey) => Profile;
   tryDemoCredentials: (email: string, password: string) => Profile | null;
 }
 
@@ -76,6 +157,9 @@ const buildDemoUserAndProfile = (spec: DemoAccountSpec): { user: User; profile: 
     user_metadata: {
       full_name: spec.full_name,
       role: spec.role,
+      year_group: spec.year_group,
+      class_name: spec.class_name,
+      house: spec.house,
       is_demo: true,
     },
     identities: [],
@@ -89,18 +173,18 @@ const buildDemoUserAndProfile = (spec: DemoAccountSpec): { user: User; profile: 
     full_name: spec.full_name,
     email: spec.email,
     role: spec.role,
-    year_group: null,
-    class_name: null,
-    house: null,
+    year_group: spec.year_group,
+    class_name: spec.class_name,
+    house: spec.house,
   };
 
   return { user: demoUser, profile: demoProfile };
 };
 
-const getStoredDemoRole = (): 'admin' | 'librarian' | null => {
+const getStoredDemoRole = (): DemoRoleKey | null => {
   const stored = safeStorage.getJSON<{ role?: string } | null>(DEMO_SESSION_KEY, null);
-  if (stored?.role === 'admin' || stored?.role === 'librarian') {
-    return stored.role;
+  if (stored?.role && stored.role in DEMO_ACCOUNTS) {
+    return stored.role as DemoRoleKey;
   }
   return null;
 };
@@ -169,7 +253,7 @@ const hasPotentialSession = (): boolean => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const initialDemoRole = getStoredDemoRole();
-  const initialDemo = initialDemoRole ? buildDemoUserAndProfile(DEMO_ADMIN_LIBRARIAN_ACCOUNTS[initialDemoRole]) : null;
+  const initialDemo = initialDemoRole ? buildDemoUserAndProfile(DEMO_ACCOUNTS[initialDemoRole]) : null;
 
   const [user, setUser] = useState<User | null>(() => initialDemo?.user ?? null);
   const [session, setSession] = useState<Session | null>(null);
@@ -177,8 +261,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [isDemoSession, setIsDemoSession] = useState<boolean>(Boolean(initialDemo));
 
-  const signInAsDemo = (role: 'admin' | 'librarian'): Profile => {
-    const spec = DEMO_ADMIN_LIBRARIAN_ACCOUNTS[role];
+  const signInAsDemo = (role: DemoRoleKey): Profile => {
+    const spec = DEMO_ACCOUNTS[role];
     const { user: demoUser, profile: demoProfile } = buildDemoUserAndProfile(spec);
     safeStorage.setJSON(DEMO_SESSION_KEY, { role, email: spec.email });
     safeStorage.setJSON('mfa_cached_profile', demoProfile);
@@ -192,7 +276,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const tryDemoCredentials = (email: string, password: string): Profile | null => {
     const normalizedEmail = email.trim().toLowerCase();
-    const match = Object.values(DEMO_ADMIN_LIBRARIAN_ACCOUNTS).find(
+    const match = Object.values(DEMO_ACCOUNTS).find(
       (acc) => acc.email.toLowerCase() === normalizedEmail && acc.password === password
     );
     if (!match) return null;
@@ -201,8 +285,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchProfile = async (targetUser: User): Promise<Profile | null> => {
     const activeDemoRole = getStoredDemoRole();
-    if (activeDemoRole && targetUser.id === DEMO_ADMIN_LIBRARIAN_ACCOUNTS[activeDemoRole].id) {
-      return buildDemoUserAndProfile(DEMO_ADMIN_LIBRARIAN_ACCOUNTS[activeDemoRole]).profile;
+    if (activeDemoRole && targetUser.id === DEMO_ACCOUNTS[activeDemoRole].id) {
+      return buildDemoUserAndProfile(DEMO_ACCOUNTS[activeDemoRole]).profile;
     }
 
     try {
@@ -286,7 +370,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           const demoRole = getStoredDemoRole();
           if (demoRole && event !== 'SIGNED_OUT') {
-            const demo = buildDemoUserAndProfile(DEMO_ADMIN_LIBRARIAN_ACCOUNTS[demoRole]);
+            const demo = buildDemoUserAndProfile(DEMO_ACCOUNTS[demoRole]);
             setSession(null);
             setUser(demo.user);
             setProfile(demo.profile);
@@ -326,7 +410,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           const demoRole = getStoredDemoRole();
           if (demoRole) {
-            const demo = buildDemoUserAndProfile(DEMO_ADMIN_LIBRARIAN_ACCOUNTS[demoRole]);
+            const demo = buildDemoUserAndProfile(DEMO_ACCOUNTS[demoRole]);
             setSession(null);
             setUser(demo.user);
             setProfile(demo.profile);

@@ -6,12 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Loader2, Eye, EyeOff, Sparkles, Trophy, Target, ShieldCheck, Megaphone, Copy, Check, Library } from 'lucide-react';
+import { BookOpen, Loader2, Eye, EyeOff, Sparkles, Trophy, Target, ShieldCheck, Megaphone, Copy, Check, Library, GraduationCap, Users, Award, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 import { HOUSES, YEAR_GROUPS, CLASSES, USER_ROLES } from '@/lib/constants';
 import { validateAccessCode, STANDARD_ACCESS_CODES } from '@/lib/accessCodes';
 import { getAuthPageConfig, fetchRemoteAuthPageConfig, AuthPageConfig } from '@/lib/authPageConfig';
-import { useAuth, DEMO_ADMIN_LIBRARIAN_ACCOUNTS } from '@/contexts/AuthContext';
+import { useAuth, DEMO_ACCOUNTS, type DemoRoleKey } from '@/contexts/AuthContext';
 import { z } from 'zod';
 import { Helmet } from 'react-helmet-async';
 
@@ -178,33 +178,16 @@ const Auth = () => {
       const demoMatched = tryDemoCredentials(formData.email, formData.password);
       if (demoMatched) {
         toast.success(`Signed in as ${demoMatched.full_name}!`);
-        navigate('/admin?s=submissions');
+        navigate('/dashboard');
         return;
       }
 
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: formData.email, password: formData.password,
       });
       if (error) throw error;
       toast.success('Signed in successfully!');
-
-      let targetRoute = '/dashboard';
-      if (authData?.user) {
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', authData.user.id)
-          .maybeSingle();
-
-        if (prof?.role === 'librarian' || prof?.role === 'admin' || formData.email.toLowerCase().includes('admin') || formData.email.toLowerCase().includes('librarian')) {
-          targetRoute = '/admin?s=submissions';
-        } else {
-          targetRoute = '/dashboard';
-        }
-      } else if (formData.email.toLowerCase().includes('admin') || formData.email.toLowerCase().includes('librarian')) {
-        targetRoute = '/admin?s=submissions';
-      }
-      navigate(targetRoute);
+      navigate('/dashboard');
     } catch (error: any) {
       if (error instanceof z.ZodError) toast.error(error.errors[0].message);
       else toast.error(error.message || 'Invalid credentials');
@@ -213,10 +196,10 @@ const Auth = () => {
     }
   };
 
-  const handleQuickDemoSignIn = (role: 'librarian' | 'admin') => {
+  const handleQuickDemoSignIn = (role: DemoRoleKey) => {
     const demoProfile = signInAsDemo(role);
     toast.success(`Signed in as ${demoProfile.full_name}!`);
-    navigate('/admin?s=submissions');
+    navigate('/dashboard');
   };
 
   const copyDemoValue = (key: string, value: string) => {
@@ -365,77 +348,96 @@ const Auth = () => {
                 </Button>
               </form>
 
-              {/* Demo Admin & Librarian Quick Access */}
-              <div className="mt-6 rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 space-y-3">
+              {/* Demo Accounts Quick Access for Every Role */}
+              <div className="mt-6 rounded-2xl border border-slate-700/80 bg-slate-900/80 p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                      Demo Accounts (Admin &amp; Librarian)
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-100">
+                      Demo Accounts (Every Role)
                     </span>
                   </div>
-                  <span className="text-[10px] font-medium text-emerald-400">Instant Access</span>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                    7 Roles Ready
+                  </span>
                 </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Test every portal role instantly with 1-click sign-in, or copy any email &amp; password into the sign-in form above.
+                </p>
 
-                <div className="grid gap-2.5">
-                  {(['librarian', 'admin'] as const).map((roleKey) => {
-                    const acc = DEMO_ADMIN_LIBRARIAN_ACCOUNTS[roleKey];
-                    const isLib = roleKey === 'librarian';
+                <div className="grid gap-2.5 max-h-[340px] overflow-y-auto pr-1">
+                  {(
+                    [
+                      { key: 'student' as const, badge: 'Student', accent: 'border-emerald-500/35 bg-emerald-500/10', pill: 'bg-emerald-500/20 text-emerald-300', icon: GraduationCap, iconColor: 'text-emerald-400' },
+                      { key: 'librarian' as const, badge: 'Librarian', accent: 'border-amber-500/35 bg-amber-500/10', pill: 'bg-amber-500/20 text-amber-300', icon: Library, iconColor: 'text-amber-400' },
+                      { key: 'admin' as const, badge: 'Admin', accent: 'border-sky-500/35 bg-sky-500/10', pill: 'bg-sky-500/20 text-sky-300', icon: ShieldCheck, iconColor: 'text-sky-400' },
+                      { key: 'head_of_year' as const, badge: 'Head of Year', accent: 'border-violet-500/35 bg-violet-500/10', pill: 'bg-violet-500/20 text-violet-300', icon: Users, iconColor: 'text-violet-400' },
+                      { key: 'house_patron' as const, badge: 'House Patron', accent: 'border-rose-500/35 bg-rose-500/10', pill: 'bg-rose-500/20 text-rose-300', icon: Award, iconColor: 'text-rose-400' },
+                      { key: 'homeroom_tutor' as const, badge: 'Homeroom Tutor', accent: 'border-cyan-500/35 bg-cyan-500/10', pill: 'bg-cyan-500/20 text-cyan-300', icon: BookOpen, iconColor: 'text-cyan-400' },
+                      { key: 'staff' as const, badge: 'Staff', accent: 'border-slate-500/35 bg-slate-800/70', pill: 'bg-slate-600/30 text-slate-200', icon: UserCog, iconColor: 'text-slate-300' },
+                    ]
+                  ).map((item) => {
+                    const acc = DEMO_ACCOUNTS[item.key];
+                    const RoleIcon = item.icon;
                     return (
                       <div
-                        key={roleKey}
-                        className="rounded-xl border border-slate-700/70 bg-slate-950/70 p-3 space-y-2"
+                        key={item.key}
+                        className={`rounded-xl border p-3 space-y-2 ${item.accent}`}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            {isLib ? (
-                              <Library className="w-4 h-4 text-amber-400 shrink-0" />
-                            ) : (
-                              <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
-                            )}
-                            <span className="text-xs font-bold text-white truncate">{acc.label}</span>
+                            <RoleIcon className={`w-4 h-4 shrink-0 ${item.iconColor}`} />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs font-bold text-white truncate">{acc.label}</span>
+                                <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${item.pill}`}>
+                                  {item.badge}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 truncate mt-0.5">{acc.description}</p>
+                            </div>
                           </div>
                           <Button
                             type="button"
                             size="sm"
-                            onClick={() => handleQuickDemoSignIn(roleKey)}
+                            onClick={() => handleQuickDemoSignIn(item.key)}
                             className="h-7 px-2.5 text-[11px] font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shrink-0"
                           >
-                            Sign In Now
+                            Sign In
                           </Button>
                         </div>
 
                         <div className="grid grid-cols-1 gap-1 text-[11px] font-mono text-slate-300">
-                          <div className="flex items-center justify-between gap-2 bg-slate-900/80 rounded-md px-2 py-1">
+                          <div className="flex items-center justify-between gap-2 bg-slate-950/70 rounded-md px-2 py-1">
                             <span className="truncate">
                               <span className="text-slate-500">Email: </span>
                               {acc.email}
                             </span>
                             <button
                               type="button"
-                              onClick={() => copyDemoValue(`${roleKey}-email`, acc.email)}
+                              onClick={() => copyDemoValue(`${item.key}-email`, acc.email)}
                               className="text-slate-400 hover:text-white shrink-0"
                               title="Copy email"
                             >
-                              {copiedKey === `${roleKey}-email` ? (
+                              {copiedKey === `${item.key}-email` ? (
                                 <Check className="w-3.5 h-3.5 text-emerald-400" />
                               ) : (
                                 <Copy className="w-3.5 h-3.5" />
                               )}
                             </button>
                           </div>
-                          <div className="flex items-center justify-between gap-2 bg-slate-900/80 rounded-md px-2 py-1">
+                          <div className="flex items-center justify-between gap-2 bg-slate-950/70 rounded-md px-2 py-1">
                             <span className="truncate">
                               <span className="text-slate-500">Pass: </span>
                               {acc.password}
                             </span>
                             <button
                               type="button"
-                              onClick={() => copyDemoValue(`${roleKey}-pass`, acc.password)}
+                              onClick={() => copyDemoValue(`${item.key}-pass`, acc.password)}
                               className="text-slate-400 hover:text-white shrink-0"
                               title="Copy password"
                             >
-                              {copiedKey === `${roleKey}-pass` ? (
+                              {copiedKey === `${item.key}-pass` ? (
                                 <Check className="w-3.5 h-3.5 text-emerald-400" />
                               ) : (
                                 <Copy className="w-3.5 h-3.5" />

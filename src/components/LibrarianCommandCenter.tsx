@@ -301,127 +301,60 @@ export default function LibrarianCommandCenter({
 
   return (
     <div className="mb-8">
-      <div className="space-y-6 min-w-0">
-        {/* Hero header - only displayed for general administrative oversight tabs */}
-        {!isSubmissions && (
-          <div
-            className="relative overflow-hidden rounded-3xl border border-border p-6 sm:p-8"
-            style={{ background: "var(--gradient-hero)" }}
-          >
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative">
-              <div>
-                <div
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-3"
-                  style={{ background: "hsl(var(--v-yellow) / 0.18)", color: "hsl(var(--v-yellow))" }}
+      <div className="space-y-5 min-w-0">
+        {/* Two compact floating well-rounded rotating-gradient divs */}
+        {activeSection !== "system-links" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
+            <div
+              className="lg:col-span-7 rounded-3xl border p-4 sm:p-5 shadow-md rotating-gradient-card flex flex-col justify-center"
+              style={{
+                borderColor: "hsl(var(--v-electric-blue) / 0.30)",
+                backgroundImage:
+                  "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-electric-blue) / 0.16) 0%, hsl(var(--card)) 52%, hsl(var(--v-emerald) / 0.14) 100%)",
+              }}
+            >
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-mono uppercase tracking-widest font-bold bg-primary/10 text-primary border border-primary/20 w-fit">
+                <Sparkles className="w-3 h-3" />
+                <span>{activeSection}</span>
+              </div>
+              <h2 className="font-display text-xl sm:text-2xl font-black mt-1.5 text-foreground tracking-tight">
+                {meta.title}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                {meta.subtitle}
+              </p>
+            </div>
+
+            <div
+              className="lg:col-span-5 rounded-3xl border p-4 sm:p-5 shadow-md rotating-gradient-card flex flex-wrap items-center justify-start lg:justify-end gap-2"
+              style={{
+                borderColor: "hsl(var(--v-violet) / 0.30)",
+                backgroundImage:
+                  "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-violet) / 0.15) 0%, hsl(var(--card)) 52%, hsl(var(--v-yellow) / 0.15) 100%)",
+              }}
+            >
+              {activeSection !== "create" && (
+                <Button
+                  size="sm"
+                  onClick={() => onSelectSection("create")}
+                  className="rounded-2xl h-9 px-3.5 text-xs font-bold text-white border-0 shadow-sm whitespace-nowrap shrink-0"
+                  style={{ background: "linear-gradient(120deg, hsl(var(--v-green)), hsl(var(--v-cyan)))" }}
                 >
-                  <ShieldCheck className="w-3.5 h-3.5" /> ACADEMY ADMIN &amp; LIBRARIAN COMMAND CENTER
-                </div>
-                <h2 className="font-display text-3xl sm:text-4xl font-bold leading-tight">
-                  <span className="text-gradient-luminous">Admin Command Center</span>{" "}
-                  🛡️
-                </h2>
-                <p className="text-muted-foreground mt-2 max-w-xl">
-                  Whole-school control over challenges, student reading reflections, cohort controls, and program dispatches.
-                </p>
-                <div className="flex flex-wrap gap-3 mt-5 items-center">
-                  <Button
-                    onClick={() => onSelectSection("create")}
-                    className="rounded-full text-white border-0"
-                    style={{ background: "linear-gradient(120deg, hsl(var(--v-green)), hsl(var(--v-cyan)))" }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> New Challenge
-                  </Button>
-                  <Button asChild variant="outline" className="rounded-full">
-                    <a href="https://mfa.follettdestiny.com" target="_blank" rel="noreferrer">
-                      <Library className="w-4 h-4 mr-2" /> Browse Library Catalog
-                    </a>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="rounded-full"
-                    onClick={() => onSelectSection("import")}
-                  >
-                    <FolderUp className="w-4 h-4 mr-2" /> Bulk Import
-                  </Button>
-                  <AppDownloadButton
-                    className="rounded-full bg-primary/10 hover:bg-primary/20 text-primary border-primary/30 h-10 px-4 text-xs font-semibold"
-                    label="Download App"
-                  />
-                  <ThemeToggle />
-                </div>
-              </div>
-
-              {/* Session & Theme Control Overview Card */}
-              <div className="rounded-3xl bg-background/80 backdrop-blur border border-border p-5 space-y-3 min-w-[280px] sm:min-w-[320px] shadow-sm">
-                <div className="flex items-center justify-between pb-2 border-b border-border">
-                  <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                    <Sliders className="w-4 h-4 text-emerald-500" /> Session & Theme Control
-                  </div>
-                  <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[10px] py-0 h-4">
-                    Active
-                  </Badge>
-                </div>
-
-                <div className="space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>Reading Session:</span>
-                    <span className="font-semibold text-foreground">2025/2026 Academic Term</span>
-                  </div>
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>Theme Engine:</span>
-                    <span className="font-semibold text-foreground flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block" />
-                      Interactive Adaptive
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>Submissions Window:</span>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">Open & Tracked</span>
-                  </div>
-                </div>
-
-                <div className="pt-1 flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onSelectSection("controls")}
-                    className="w-full text-xs font-semibold h-8 gap-1.5 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  >
-                    <Sliders className="w-3.5 h-3.5" /> Manage Session & Theme
-                  </Button>
-                </div>
-              </div>
+                  <Plus className="w-3.5 h-3.5 mr-1.5" /> New Challenge
+                </Button>
+              )}
+              <Button asChild size="sm" variant="outline" className="rounded-2xl h-9 px-3.5 text-xs font-semibold bg-background/80 whitespace-nowrap shrink-0">
+                <a href="https://mfa.follettdestiny.com" target="_blank" rel="noreferrer">
+                  <Library className="w-3.5 h-3.5 mr-1.5" /> MFA Follet Destiny
+                </a>
+              </Button>
+              <AppDownloadButton
+                className="rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary border-primary/30 h-9 px-3.5 text-xs font-semibold whitespace-nowrap shrink-0"
+                label="Download App"
+              />
+              <ThemeToggle />
             </div>
           </div>
-        )}
-
-        {/* Section header with vibrant linear gradient and well-rounded styling */}
-        {activeSection !== "system-links" && (
-          <Card className="rounded-3xl border-border/80 bg-gradient-to-r from-card via-card/90 to-primary/5 shadow-md overflow-hidden">
-            <CardContent className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest font-bold bg-primary/10 text-primary border border-primary/20">
-                  <Sparkles className="w-3 h-3" />
-                  <span>{activeSection}</span>
-                </div>
-                <h3 className="font-display text-2xl sm:text-3xl font-black mt-2 bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
-                  {meta.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-3xl leading-relaxed">
-                  {meta.subtitle}
-                </p>
-              </div>
-              {isSubmissions && (
-                <div className="flex items-center gap-2 flex-wrap shrink-0">
-                  <AppDownloadButton
-                    className="rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary border-primary/30 h-9 px-3.5 text-xs font-semibold"
-                    label="Download App"
-                  />
-                  <ThemeToggle />
-                </div>
-              )}
-            </CardContent>
-          </Card>
         )}
 
         {/* Section body */}
@@ -4077,7 +4010,7 @@ function BroadcastSection({ initialMode = "broadcast" }: { initialMode?: "broadc
               <p className="text-xs text-muted-foreground mt-0.5">
                 {studioMode === "certificate"
                   ? "Customize, preview, download official achievement PDFs, and dispatch certified awards directly to scholars' school emails and inboxes."
-                  : "Dispatch official leadership announcements directly to scholars' school emails and Challenge Inboxes."}
+                  : "Dispatch official leadership announcements directly to scholars' school emails and Reading Inboxes."}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">

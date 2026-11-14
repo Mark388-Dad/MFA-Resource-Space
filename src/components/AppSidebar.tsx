@@ -32,6 +32,10 @@ import {
   IdCard,
   UserCog,
   KeyRound,
+  CheckCircle2,
+  Inbox,
+  BadgeCheck,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -44,56 +48,96 @@ import { TopbarChallengeToggle } from "@/components/TopbarChallengeToggle";
 import { ActiveChallengeHeaderBanner } from "@/components/ActiveChallengeHeaderBanner";
 import { useChallenges } from "@/contexts/ChallengeContext";
 import { BroadcastCenterDialog } from "@/components/BroadcastCenterDialog";
-import { getUnreadEmailCount } from "@/lib/emailRepliesManager";
+import {
+  getUnreadEmailCount,
+  subscribeToInboxRealtime,
+  syncSupabaseNotificationsToInbox,
+} from "@/lib/emailRepliesManager";
 import { useMainSidebar } from "@/lib/sidebarHelper";
 import { useState, useEffect } from "react";
 import { useSiteContent } from "@/hooks/useSiteContent";
 
+interface AdminNavItem {
+  key: string;
+  label: string;
+  desc?: string;
+  to: string;
+  icon: LucideIcon;
+  tone: string;
+  badgeType?: "inbox";
+  external?: boolean;
+}
+
+interface AdminNavGroup {
+  step: string;
+  label: string;
+  subtitle?: string;
+  statusText?: string;
+  accent: string;
+  items: AdminNavItem[];
+}
+
 /**
- * Dedicated Admin Command Center Sidebar Groups.
- * Rendered for administrators and librarians, or when navigating admin routes.
+ * Unified Librarian & Admin Sidebar Groups.
+ * Arranged in clear operational flow with floating rounded linear-gradient sections.
  */
-const ADMIN_COMMAND_GROUPS = [
+const LIBRARIAN_SIDEBAR_GROUPS: AdminNavGroup[] = [
   {
-    label: "Submissions & Reviews",
+    step: "01",
+    label: "Reading Portal",
+    subtitle: "Overview, rankings, inbox & studio",
+    accent: "var(--v-emerald)",
     items: [
-      { key: "submissions", label: "All Submissions", icon: ListChecks, tone: "var(--v-electric-blue)" },
-      { key: "flagged", label: "Flagged", icon: Flag, tone: "var(--v-red)" },
-      { key: "import", label: "Bulk Import", icon: FolderUp, tone: "var(--v-cyan)" },
+      { key: "route:/dashboard", label: "Dashboard", desc: "Academy KPIs & cohorts", to: "/dashboard", icon: Home, tone: "var(--v-emerald)" },
+      { key: "route:/challenges", label: "Challenges", desc: "Active reading quests", to: "/challenges", icon: Trophy, tone: "var(--v-yellow)" },
+      { key: "route:/leaderboard", label: "Full Leaderboard", desc: "School-wide standings", to: "/leaderboard", icon: BarChart3, tone: "var(--v-gold)" },
+      { key: "route:/inbox", label: "Inbox", desc: "Reading mail & replies", to: "/inbox", icon: Inbox, tone: "var(--v-orange)", badgeType: "inbox" },
+      { key: "certificates-portal", label: "Certificates", desc: "Certificate Studio", to: "/admin?s=certificates", icon: BadgeCheck, tone: "var(--v-cyan)" },
+      { key: "route:/settings", label: "Settings", desc: "Account & theme", to: "/settings", icon: Settings, tone: "var(--v-mint)" },
     ],
   },
   {
-    label: "Programme & Controls",
+    step: "02",
+    label: "Challenge Operations",
+    subtitle: "Submissions, flagged reviews, quests & bulk imports",
+    accent: "var(--v-electric-blue)",
     items: [
-      { key: "controls", label: "Session & Theme Controls", icon: Sliders, tone: "var(--v-emerald)" },
-      { key: "challenges", label: "Active Challenges", icon: Trophy, tone: "var(--v-yellow)" },
-      { key: "registrations", label: "Enrolment & Participants", icon: Users, tone: "var(--v-emerald)" },
-      { key: "create", label: "Create Challenge", icon: Plus, tone: "var(--v-green)" },
-      { key: "categories", label: "Reading Categories", icon: Layers, tone: "var(--v-fuchsia)" },
-      { key: "certificates", label: "Certificate Studio", icon: Award, tone: "var(--v-gold)" },
+      { key: "submissions", label: "All Submissions", desc: "Approve, review & export", to: "/admin?s=submissions", icon: ListChecks, tone: "var(--v-emerald)" },
+      { key: "flagged", label: "Flagged Queue", desc: "Plagiarism & policy review", to: "/admin?s=flagged", icon: Flag, tone: "var(--v-red)" },
+      { key: "challenges", label: "Active Challenges", desc: "Manage live reading quests", to: "/admin?s=challenges", icon: Trophy, tone: "var(--v-yellow)" },
+      { key: "create", label: "Create Challenge", desc: "Launch new challenge", to: "/admin?s=create", icon: Plus, tone: "var(--v-green)" },
+      { key: "categories", label: "Reading Categories", desc: "Realms & prompt rules", to: "/admin?s=categories", icon: Layers, tone: "var(--v-cyan)" },
+      { key: "import", label: "Bulk Import", desc: "CSV & spreadsheet loader", to: "/admin?s=import", icon: FolderUp, tone: "var(--v-mint)" },
     ],
   },
   {
-    label: "Publishing & Broadcasts",
+    step: "03",
+    label: "Participant Management",
+    subtitle: "Enrolment, student profiles, staff roles & certificates",
+    accent: "var(--v-cobalt)",
     items: [
-      { key: "broadcast", label: "Mass Broadcaster", icon: Megaphone, tone: "var(--v-hot-pink)" },
-      { key: "certificate-dispatch", label: "Certificate Dispatch", icon: Award, tone: "var(--v-gold)" },
-      { key: "system-links", label: "System Links & Redirects", icon: Link2, tone: "var(--v-cyan)" },
-      { key: "homepage", label: "Homepage Studio", icon: Home, tone: "var(--v-mint)" },
+      { key: "registrations", label: "Enrolment Roster", desc: "Students & staff joined", to: "/admin?s=registrations", icon: Users, tone: "var(--v-electric-blue)" },
+      { key: "students", label: "Student Profiles", desc: "Edit cohorts & houses", to: "/admin?s=students", icon: IdCard, tone: "var(--v-emerald)" },
+      { key: "members", label: "Staff Members", desc: "Tutors, patrons & roles", to: "/admin?s=members", icon: UserCog, tone: "var(--v-cobalt)" },
+      { key: "codes", label: "Access Codes", desc: "Generate cohort codes", to: "/admin?s=codes", icon: KeyRound, tone: "var(--v-yellow)" },
+      { key: "leaderboard", label: "Leaderboard Audit", desc: "Full school rankings", to: "/admin?s=leaderboard", icon: BarChart3, tone: "var(--v-gold)" },
+      { key: "certificate-dispatch", label: "Certificate Dispatch", desc: "Email verified awards", to: "/admin?s=certificate-dispatch", icon: Award, tone: "var(--v-violet)" },
     ],
   },
   {
-    label: "People & Governance",
+    step: "04",
+    label: "System Controls",
+    subtitle: "Session state, broadcasts, catalog links & verification",
+    statusText: "Portal Live",
+    accent: "var(--v-orange)",
     items: [
-      { key: "students", label: "Student Profiles", icon: IdCard, tone: "var(--v-emerald)" },
-      { key: "members", label: "Staff Members", icon: UserCog, tone: "var(--v-cobalt)" },
-      { key: "codes", label: "Access Codes", icon: KeyRound, tone: "var(--v-yellow)" },
-    ],
-  },
-  {
-    label: "Data & Leaderboard Audit",
-    items: [
-      { key: "leaderboard", label: "Full Leaderboard Audit", icon: Trophy, tone: "var(--v-gold)" },
+      { key: "controls", label: "Session & Theme", desc: "Open/lock dates & mode", to: "/admin?s=controls", icon: Sliders, tone: "var(--v-yellow)" },
+      { key: "broadcast", label: "Mass Broadcaster", desc: "Email students & staff", to: "/admin?s=broadcast", icon: Megaphone, tone: "var(--v-hot-pink)" },
+      { key: "certificates", label: "Certificate Studio", desc: "Templates & PDF export", to: "/admin?s=certificates", icon: Award, tone: "var(--v-gold)" },
+      { key: "homepage", label: "Homepage Studio", desc: "Edit public landing page", to: "/admin?s=homepage", icon: Home, tone: "var(--v-orange)" },
+      { key: "system-links", label: "System Links", desc: "URLs & redirect engine", to: "/admin?s=system-links", icon: Link2, tone: "var(--v-cyan)" },
+      { key: "route:/admin/migration-check", label: "Migration Check", desc: "Verify schema & rules", to: "/admin/migration-check", icon: CheckCircle2, tone: "var(--v-violet)" },
+      { key: "external:follet", label: "MFA Follet Destiny", desc: "Open school book catalog", to: "https://mfa.follettdestiny.com", icon: Library, tone: "var(--v-mint)", external: true },
     ],
   },
 ];
@@ -146,15 +190,22 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const handleUpdate = () => setUnreadRepliesCount(getUnreadEmailCount(userAccountKey));
     handleUpdate();
-    window.addEventListener("mfa_email_replies_updated", handleUpdate);
-    return () => window.removeEventListener("mfa_email_replies_updated", handleUpdate);
-  }, [userAccountKey]);
+    const unsub = subscribeToInboxRealtime(userAccountKey, user?.id, async (detail) => {
+      if (detail?.fromRemote && user?.id) {
+        await syncSupabaseNotificationsToInbox(
+          user.id,
+          profile?.email || user?.email || "",
+          profile?.full_name || "Academy Reader"
+        );
+      }
+      handleUpdate();
+    });
+    return () => unsub();
+  }, [userAccountKey, user?.id, profile?.email, user?.email, profile?.full_name]);
 
-  // Clean, professional role subtitle
-  const roleTitle = profile?.role === "admin"
-    ? "Academy Administrator"
-    : profile?.role === "librarian"
-    ? "Head Librarian"
+  // Admin is the Librarian: unified Head Librarian & Admin role title
+  const roleTitle = profile?.role === "admin" || profile?.role === "librarian"
+    ? "Head Librarian & Admin"
     : profile?.role === "head_of_year"
     ? `Head of Year (${profile.year_group || "Cohort"})`
     : profile?.role === "homeroom_tutor"
@@ -167,19 +218,21 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
     ? `Student • Creator (${profile?.house || "Scholar"})`
     : `Student (${profile?.house || "Scholar"})`;
 
-  // Student portal navigation items (Submit Book & My Progress strictly for student readers & creator)
-  const studentNavItems = [
-    { path: "/dashboard", label: "Dashboard", icon: Home },
-    { path: "/challenges", label: "Challenges", icon: Trophy },
-    ...(!isStaff || isCreator
-      ? [
-          { path: "/submit", label: "Submit Book", icon: PlusCircle },
-          { path: "/progress", label: "My Progress", icon: BarChart3 },
-        ]
-      : []),
-    { path: isStaff && !isCreator ? "/admin?s=leaderboard" : "/leaderboard", label: "Full Leaderboard", icon: Trophy },
-    { path: "/settings", label: "Settings", icon: Settings },
-  ];
+  // Primary portal navigation items: clean focused set for Students & non-admin Staff
+  const studentNavItems: { path: string; label: string; icon: LucideIcon; tone: string }[] = !isStaff || isCreator
+    ? [
+        { path: "/dashboard", label: "Dashboard", icon: Home, tone: "var(--v-emerald)" },
+        { path: "/submit", label: "Submit Book", icon: PlusCircle, tone: "var(--v-electric-blue)" },
+        { path: "/progress", label: "My Progress", icon: BarChart3, tone: "var(--v-cyan)" },
+        { path: "/leaderboard", label: "Leaderboard", icon: Trophy, tone: "var(--v-gold)" },
+        { path: "/settings", label: "Settings", icon: Settings, tone: "var(--v-mint)" },
+      ]
+    : [
+        { path: "/dashboard", label: "Dashboard", icon: Home, tone: "var(--v-emerald)" },
+        { path: "/challenges", label: "Challenges", icon: Trophy, tone: "var(--v-yellow)" },
+        { path: "/leaderboard", label: "Leaderboard", icon: BarChart3, tone: "var(--v-gold)" },
+        { path: "/settings", label: "Settings", icon: Settings, tone: "var(--v-mint)" },
+      ];
 
   const studentExtras = [
     { path: "/#goals", label: "Reading Goals", icon: Target, tone: "var(--v-green)" },
@@ -205,7 +258,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
         {/* Sidebar Header with School Logo Floating Naturally */}
         <div className="flex items-center justify-between mb-4">
           <Link
-            to={showAdminSidebar ? "/admin?s=submissions" : "/dashboard"}
+            to={showAdminSidebar ? "/dashboard" : "/dashboard"}
             className="flex items-center gap-2.5 px-2 py-1.5 rounded-2xl hover:bg-sidebar-accent/50 transition-colors flex-1 min-w-0 group"
           >
             {/* School Logo Floating Naturally with No Square Background */}
@@ -215,18 +268,18 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
               className="w-10 h-10 object-contain drop-shadow-md bg-transparent select-none shrink-0 transition-transform group-hover:scale-105"
             />
             <span className="leading-tight min-w-0">
-              <span className="block font-display text-sm font-bold tracking-tight truncate text-sidebar-foreground">
+              <span className="block font-display text-[13px] font-bold tracking-tight leading-snug line-clamp-2 text-sidebar-foreground">
                 {showAdminSidebar
-                  ? "Admin Command"
+                  ? (selectedChallenge?.id === "all" || !selectedChallenge?.title || selectedChallenge.title.startsWith("45-Book Reading Challenge")
+                      ? "45-Book Reading Challenge 2025/2026"
+                      : selectedChallenge.title)
                   : selectedChallenge?.title
                   ? selectedChallenge.title.split(":")[0]
                   : brand.title}
               </span>
-              <span className="block text-[10px] uppercase font-bold tracking-[0.14em] text-primary truncate">
-                {showAdminSidebar
-                  ? "Academy Workspace"
-                  : selectedChallengeId === "all"
-                  ? "Combined Portal"
+              <span className="block text-[10px] uppercase font-bold tracking-[0.14em] text-primary truncate mt-0.5">
+                {selectedChallengeId === "all"
+                  ? "45 Books Quest • Combined"
                   : `${selectedChallenge?.target_books || 45} Books Quest`}
               </span>
             </span>
@@ -242,162 +295,301 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         {/* ========================================================================= */}
-        {/* CASE 1: ADMIN COMMAND CENTER SIDEBAR (Active for Administrators/Librarians) */}
-        {/* Strictly Admin workspace: No student submit book, challenge inbox, etc.   */}
+        {/* CASE 1: UNIFIED LIBRARIAN & ADMIN SIDEBAR (Full Portal + Command Center)  */}
+        {/* Color-coded section containers arranged in clear operational flow order.  */}
         {/* ========================================================================= */}
         {showAdminSidebar ? (
-          <nav className="flex-1 space-y-4">
-            {/* Quick Switch Button between Admin Command & Student Portal */}
-            <div className="px-1">
-              {isAdminRoute ? (
-                <Link
-                  to="/dashboard"
-                  className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted border border-border/70 transition-all shadow-2xs group"
-                >
-                  <div className="flex items-center gap-2">
-                    <ArrowLeft className="w-3.5 h-3.5 text-primary transition-transform group-hover:-translate-x-0.5" />
-                    <span>Preview Student Portal</span>
+          <nav className="flex-1 space-y-3 pr-0.5">
+            {LIBRARIAN_SIDEBAR_GROUPS.map((group) => (
+              <div
+                key={group.label}
+                className="rounded-3xl border p-2.5 space-y-1.5 shadow-sm transition-colors"
+                style={{
+                  borderColor: `hsl(${group.accent} / 0.30)`,
+                  background: `linear-gradient(155deg, hsl(${group.accent} / 0.12), hsl(${group.accent} / 0.03), hsl(var(--sidebar)))`,
+                }}
+              >
+                <div className="px-2 pt-0.5 pb-1 space-y-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className="text-[11px] font-extrabold tracking-wide uppercase truncate"
+                      style={{ color: `hsl(${group.accent})` }}
+                    >
+                      {group.label}
+                    </span>
+                    <span
+                      className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-lg shrink-0"
+                      style={{
+                        background: `hsl(${group.accent} / 0.16)`,
+                        color: `hsl(${group.accent})`,
+                      }}
+                    >
+                      {group.statusText || group.step}
+                    </span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground/70 font-mono">ESC</span>
-                </Link>
-              ) : (
-                <Link
-                  to="/admin?s=submissions"
-                  className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-primary hover:text-primary-foreground bg-primary/10 hover:bg-primary border border-primary/30 transition-all shadow-2xs group"
-                >
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Return to Admin Command</span>
-                  </div>
-                  <span className="text-[10px] font-mono">ADMIN</span>
-                </Link>
-              )}
-            </div>
-
-            {/* Serious Admin Navigation Groups */}
-            {ADMIN_COMMAND_GROUPS.map((group) => (
-              <div key={group.label} className="space-y-1">
-                <div className="px-3 text-[10px] font-bold tracking-widest uppercase text-muted-foreground/70">
-                  {group.label}
+                  {group.subtitle && (
+                    <p className="text-[10px] text-sidebar-foreground/65 leading-snug line-clamp-2">
+                      {group.subtitle}
+                    </p>
+                  )}
                 </div>
-                <div className="space-y-0.5">
+
+                <div className="space-y-1">
                   {group.items.map((item) => {
-                    const active = location.pathname === "/admin" && activeAdminSection === item.key;
+                    const isRouteItem = item.key.startsWith("route:");
+                    const routePath = isRouteItem ? item.key.replace("route:", "") : "";
+                    const effectiveKey = item.key === "certificates-portal" ? "certificates" : item.key;
+                    const active = item.external
+                      ? false
+                      : isRouteItem
+                      ? location.pathname === routePath ||
+                        (routePath === "/inbox" && location.pathname === "/email-inbox")
+                      : location.pathname === "/admin" && activeAdminSection === effectiveKey;
+
+                    const inner = (
+                      <>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span
+                            className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 shadow-xs"
+                            style={{ background: `hsl(${item.tone} / 0.18)` }}
+                          >
+                            <item.icon className="w-3.5 h-3.5" style={{ color: `hsl(${item.tone})` }} />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold text-foreground truncate leading-tight">
+                              {item.label}
+                            </div>
+                            {item.desc && (
+                              <div className="text-[10px] text-sidebar-foreground/60 truncate leading-tight mt-0.5">
+                                {item.desc}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {item.badgeType === "inbox" && (
+                          <span
+                            className={cn(
+                              "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full shrink-0",
+                              unreadRepliesCount > 0
+                                ? "bg-red-500 text-white"
+                                : "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            {unreadRepliesCount}
+                          </span>
+                        )}
+                      </>
+                    );
+
+                    if (item.external) {
+                      return (
+                        <a
+                          key={item.key}
+                          href={item.to}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full flex items-center justify-between gap-2 px-2 py-2 rounded-2xl border transition-all text-left hover:-translate-y-0.5 shadow-2xs"
+                          style={{
+                            borderColor: `hsl(${item.tone} / 0.30)`,
+                            background: `linear-gradient(135deg, hsl(${item.tone} / 0.14), hsl(${item.tone} / 0.04))`,
+                          }}
+                        >
+                          {inner}
+                        </a>
+                      );
+                    }
+
                     return (
                       <button
                         key={item.key}
                         type="button"
-                        onClick={() => navigate(`/admin?s=${item.key}`)}
+                        onClick={() => navigate(item.to)}
                         className={cn(
-                          "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left",
+                          "w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-2xl text-left transition-all",
                           active
-                            ? "text-foreground border shadow-xs font-semibold"
-                            : "text-sidebar-foreground/75 hover:text-foreground hover:bg-sidebar-accent"
+                            ? "border shadow-sm"
+                            : "hover:bg-sidebar-accent/70 border border-transparent"
                         )}
                         style={
                           active
                             ? {
-                                background: `linear-gradient(135deg, hsl(${item.tone} / 0.22), hsl(${item.tone} / 0.05))`,
-                                borderColor: `hsl(${item.tone} / 0.45)`,
+                                background: `linear-gradient(135deg, hsl(${item.tone} / 0.24), hsl(${item.tone} / 0.06))`,
+                                borderColor: `hsl(${item.tone} / 0.55)`,
                               }
                             : undefined
                         }
                       >
-                        <span
-                          className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ background: `hsl(${item.tone} / 0.15)` }}
-                        >
-                          <item.icon className="w-3.5 h-3.5" style={{ color: `hsl(${item.tone})` }} />
-                        </span>
-                        <span className="truncate">{item.label}</span>
+                        {inner}
                       </button>
                     );
                   })}
                 </div>
               </div>
             ))}
-
-            {/* Dedicated System Verification Link */}
-            <div className="pt-2 border-t border-sidebar-border space-y-1">
-              <div className="px-3 text-[10px] font-bold tracking-widest uppercase text-muted-foreground/70">
-                System Verification
-              </div>
-              <Link
-                to="/admin/migration-check"
-                className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left",
-                  location.pathname === "/admin/migration-check"
-                    ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                    : "text-sidebar-foreground/75 hover:text-foreground hover:bg-sidebar-accent"
-                )}
-              >
-                <span className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 bg-primary/15">
-                  <Settings className="w-3.5 h-3.5 text-primary" />
-                </span>
-                <span className="truncate">Migration Check</span>
-              </Link>
-            </div>
           </nav>
         ) : (
           /* ========================================================================= */
-          /* CASE 2: STUDENT PORTAL SIDEBAR (Standard Student Reader Experience)       */
-          /* Submit Book and My Progress strictly for student readers.                 */
+          /* CASE 2: STUDENT & FACULTY SIDEBAR (Focused Portal + Easy Access Links)    */
+          /* Students see zero admin controls; primary actions stay crisp & accessible.*/
           /* ========================================================================= */
-          <nav className="flex-1 space-y-1">
-            {studentNavItems.map((item) => {
-              const active = location.pathname === item.path;
-              return (
+          <nav className="flex-1 space-y-3 pr-0.5">
+            <div
+              className="rounded-2xl border p-2 space-y-1"
+              style={{
+                borderColor: "hsl(var(--v-emerald) / 0.25)",
+                background: "linear-gradient(160deg, hsl(var(--v-emerald) / 0.06), hsl(var(--v-cyan) / 0.02))",
+              }}
+            >
+              <div className="px-2 py-1 text-[10px] font-extrabold tracking-widest uppercase text-emerald-500">
+                {!isStaff || isCreator ? "My Reading Menu" : "Staff Menu"}
+              </div>
+
+              {studentNavItems.slice(0, !isStaff || isCreator ? 4 : 3).map((item) => {
+                const active = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold transition-all",
+                      active
+                        ? "bg-primary text-primary-foreground shadow-[0_0_20px_-5px_hsl(var(--ring))]"
+                        : "text-sidebar-foreground/80 hover:text-foreground hover:bg-sidebar-accent/80"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "w-6 h-6 rounded-lg flex items-center justify-center shrink-0",
+                        active ? "bg-white/20" : ""
+                      )}
+                      style={!active ? { background: `hsl(${item.tone} / 0.16)` } : undefined}
+                    >
+                      <item.icon className="w-3.5 h-3.5" style={!active ? { color: `hsl(${item.tone})` } : undefined} />
+                    </span>
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
+
+              {/* Reading Challenge Inbox Link */}
+              <Link
+                to="/inbox"
+                title="Reading Challenge Inbox & Correspondence"
+                className={cn(
+                  "flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all",
+                  location.pathname === "/inbox" || location.pathname === "/email-inbox"
+                    ? "bg-primary text-primary-foreground shadow-[0_0_20px_-5px_hsl(var(--ring))]"
+                    : "text-sidebar-foreground/80 hover:text-foreground hover:bg-sidebar-accent/80"
+                )}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span
+                    className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                    style={
+                      location.pathname === "/inbox" || location.pathname === "/email-inbox"
+                        ? { background: "rgba(255,255,255,0.2)" }
+                        : { background: "hsl(var(--v-orange) / 0.16)" }
+                    }
+                  >
+                    <Inbox
+                      className="w-3.5 h-3.5"
+                      style={
+                        location.pathname === "/inbox" || location.pathname === "/email-inbox"
+                          ? undefined
+                          : { color: "hsl(var(--v-orange))" }
+                      }
+                    />
+                  </span>
+                  <span className="truncate">Inbox</span>
+                </div>
+                {unreadRepliesCount > 0 ? (
+                  <span className="bg-red-500 text-white font-bold text-[10px] px-2 py-0.5 rounded-full animate-pulse">
+                    {unreadRepliesCount}
+                  </span>
+                ) : (
+                  <span className="text-[10px] opacity-70 font-mono">0</span>
+                )}
+              </Link>
+
+              {studentNavItems.slice(!isStaff || isCreator ? 4 : 3).map((item) => {
+                const active = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold transition-all",
+                      active
+                        ? "bg-primary text-primary-foreground shadow-[0_0_20px_-5px_hsl(var(--ring))]"
+                        : "text-sidebar-foreground/80 hover:text-foreground hover:bg-sidebar-accent/80"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "w-6 h-6 rounded-lg flex items-center justify-center shrink-0",
+                        active ? "bg-white/20" : ""
+                      )}
+                      style={!active ? { background: `hsl(${item.tone} / 0.16)` } : undefined}
+                    >
+                      <item.icon className="w-3.5 h-3.5" style={!active ? { color: `hsl(${item.tone})` } : undefined} />
+                    </span>
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* More Access & Explore Section for Student Readers */}
+            {!isStaff && (
+              <div
+                className="rounded-2xl border p-2 space-y-1"
+                style={{
+                  borderColor: "hsl(var(--v-electric-blue) / 0.22)",
+                  background: "linear-gradient(160deg, hsl(var(--v-electric-blue) / 0.05), hsl(var(--v-magenta) / 0.02))",
+                }}
+              >
+                <div className="px-2 py-1 text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80">
+                  Challenges &amp; Explore
+                </div>
                 <Link
-                  key={item.path}
-                  to={item.path}
+                  to="/challenges"
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                    active
-                      ? "bg-primary text-primary-foreground shadow-[0_0_20px_-5px_hsl(var(--ring))]"
-                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                    "flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all",
+                    location.pathname === "/challenges"
+                      ? "bg-primary/15 text-primary font-semibold"
+                      : "text-sidebar-foreground/75 hover:text-foreground hover:bg-sidebar-accent"
                   )}
                 >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
+                  <span
+                    className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: "hsl(var(--v-yellow) / 0.15)" }}
+                  >
+                    <Trophy className="w-3.5 h-3.5" style={{ color: "hsl(var(--v-yellow))" }} />
+                  </span>
+                  <span className="truncate">Challenges</span>
                 </Link>
-              );
-            })}
-
-            {/* Reading Challenge Inbox Link */}
-            <Link
-              to="/inbox"
-              title="Reading Challenge Inbox & Correspondence"
-              className={cn(
-                "flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                location.pathname === "/inbox" || location.pathname === "/email-inbox"
-                  ? "bg-primary text-primary-foreground shadow-[0_0_20px_-5px_hsl(var(--ring))]"
-                  : "text-sidebar-foreground/75 hover:text-foreground hover:bg-sidebar-accent"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-amber-500" />
-                <span>Challenge Inbox</span>
-              </div>
-              {unreadRepliesCount > 0 ? (
-                <span className="bg-red-500 text-white font-bold text-[10px] px-2 py-0.5 rounded-full animate-pulse">
-                  {unreadRepliesCount}
-                </span>
-              ) : (
-                <span className="text-[10px] text-muted-foreground font-mono">0</span>
-              )}
-            </Link>
-
-            {/* Explore Section for Student Readers */}
-            {!isStaff && (
-              <div className="pt-4 mt-3 border-t border-sidebar-border space-y-1.5">
-                <div className="px-3 pb-1 text-[10px] font-bold tracking-widest uppercase text-muted-foreground/70">
-                  Explore
-                </div>
+                <Link
+                  to="/certificates"
+                  className={cn(
+                    "flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all",
+                    location.pathname === "/certificates"
+                      ? "bg-primary/15 text-primary font-semibold"
+                      : "text-sidebar-foreground/75 hover:text-foreground hover:bg-sidebar-accent"
+                  )}
+                >
+                  <span
+                    className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: "hsl(var(--v-gold) / 0.15)" }}
+                  >
+                    <BadgeCheck className="w-3.5 h-3.5" style={{ color: "hsl(var(--v-gold))" }} />
+                  </span>
+                  <span className="truncate">Certificates</span>
+                </Link>
                 {studentExtras.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-sidebar-foreground/75 hover:text-foreground hover:bg-sidebar-accent transition-all"
+                    className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-sidebar-foreground/75 hover:text-foreground hover:bg-sidebar-accent transition-all"
                   >
                     <span
                       className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
@@ -412,7 +604,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                   href="https://mfa.follettdestiny.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-sidebar-foreground/75 hover:text-foreground hover:bg-sidebar-accent transition-all"
+                  className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-sidebar-foreground/75 hover:text-foreground hover:bg-sidebar-accent transition-all"
                 >
                   <span
                     className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
@@ -420,27 +612,41 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                   >
                     <Library className="w-3.5 h-3.5" style={{ color: `hsl(var(--v-mint))` }} />
                   </span>
-                  <span>Book Catalog</span>
+                  <span className="truncate">MFA Follet Destiny</span>
                 </a>
               </div>
             )}
           </nav>
         )}
 
-        {/* Promo card: Follett catalog (strictly on student portal) */}
+        {/* Promo card: MFA Follet Destiny catalog (strictly on student portal) */}
         {!showAdminSidebar && (
-          <div className="mt-4 rounded-2xl bg-sidebar-accent p-3.5 space-y-2">
-            <div className="text-xs font-semibold">Follett Library Catalog</div>
-            <p className="text-[11px] text-sidebar-foreground/60 leading-relaxed">
-              Explore thousands of books across all 15 reading realms.
+          <div
+            className="mt-4 rounded-3xl border border-emerald-500/25 p-3.5 space-y-2.5 shadow-md"
+            style={{
+              background:
+                "linear-gradient(155deg, hsl(var(--v-mint) / 0.14), hsl(var(--v-electric-blue) / 0.08), hsl(var(--sidebar-accent)))",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: "hsl(var(--v-mint) / 0.2)" }}
+              >
+                <Library className="w-3.5 h-3.5" style={{ color: "hsl(var(--v-mint))" }} />
+              </span>
+              <div className="text-xs font-bold text-foreground truncate">MFA Follet Destiny</div>
+            </div>
+            <p className="text-[11px] text-sidebar-foreground/70 leading-relaxed">
+              Explore thousands of books across all reading realms in MFA Follet Destiny.
             </p>
-            <Button asChild size="sm" className="w-full bg-background text-foreground hover:bg-muted text-xs h-7">
+            <Button asChild size="sm" className="w-full rounded-xl bg-background text-foreground hover:bg-muted text-xs h-8 font-semibold">
               <a href="https://mfa.follettdestiny.com" target="_blank" rel="noreferrer">
-                Open Catalog
+                Open MFA Follet Destiny
               </a>
             </Button>
             <AppDownloadButton
-              className="w-full bg-primary/10 hover:bg-primary/20 text-primary border-primary/30 justify-center h-7 text-xs"
+              className="w-full rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border-primary/30 justify-center h-8 text-xs"
               label="Download App"
             />
           </div>
@@ -507,7 +713,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
           <ThemeToggle compact />
           <button
             onClick={() => navigate("/inbox")}
-            title="Reading Challenge Inbox & Dispatches"
+            title="Inbox — Reading Challenge Mail"
             className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative"
           >
             <Mail className="w-4 h-4 text-amber-500" />
@@ -553,6 +759,17 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
             <>
               <button
                 type="button"
+                onClick={() => navigate("/dashboard")}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-xs",
+                  location.pathname === "/dashboard" ? "text-primary font-bold" : "text-sidebar-foreground/60"
+                )}
+              >
+                <Home className="w-5 h-5" />
+                <span>Dashboard</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => navigate("/admin?s=submissions")}
                 className={cn(
                   "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-xs",
@@ -586,42 +803,47 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/admin?s=students")}
+                onClick={() => navigate("/inbox")}
                 className={cn(
                   "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-xs",
-                  activeAdminSection === "students" && isAdminRoute ? "text-primary font-bold" : "text-sidebar-foreground/60"
+                  location.pathname === "/inbox" ? "text-primary font-bold" : "text-sidebar-foreground/60"
                 )}
               >
-                <IdCard className="w-5 h-5" />
-                <span>Students</span>
+                <Inbox className="w-5 h-5" />
+                <span>Inbox</span>
               </button>
-              <Link
-                to={isAdminRoute ? "/dashboard" : "/admin?s=submissions"}
-                className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground"
-              >
-                {isAdminRoute ? <ArrowLeft className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5 text-primary" />}
-                <span>{isAdminRoute ? "Portal" : "Admin"}</span>
-              </Link>
             </>
           ) : (
             <>
-              {studentNavItems.map((item) => {
+              {studentNavItems.slice(0, 4).map((item) => {
                 const active = location.pathname === item.path;
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
                     className={cn(
-                      "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-xs",
+                      "flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-lg text-xs",
                       active ? "text-primary font-semibold" : "text-sidebar-foreground/60"
                     )}
                   >
                     <item.icon className="w-5 h-5" />
-                    <span>{item.label.split(" ")[0]}</span>
+                    <span>{item.label.replace("My ", "").split(" ")[0]}</span>
                   </Link>
                 );
               })}
-
+              <Link
+                to="/inbox"
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-lg text-xs relative",
+                  location.pathname === "/inbox" ? "text-primary font-semibold" : "text-sidebar-foreground/60"
+                )}
+              >
+                <Inbox className="w-5 h-5" />
+                <span>Inbox</span>
+                {unreadRepliesCount > 0 && (
+                  <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                )}
+              </Link>
             </>
           )}
         </div>

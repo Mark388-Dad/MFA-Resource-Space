@@ -1,8 +1,17 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { 
-  Calendar, Clock, Sparkles, Lock, CheckCircle2, Hourglass
+import {
+  Calendar,
+  Clock,
+  Sparkles,
+  Lock,
+  Hourglass,
+  Target,
+  Award,
+  ShieldCheck,
+  CheckCircle2,
+  Sliders,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -79,7 +88,7 @@ export function SessionCountdownBanner({ isLibrarian = false }: { isLibrarian?: 
     hours: 0,
     minutes: 0,
     seconds: 0,
-    targetLabel: "Session Submissions Lock In",
+    targetLabel: "Submissions Lock In",
   });
 
   useEffect(() => {
@@ -126,254 +135,268 @@ export function SessionCountdownBanner({ isLibrarian = false }: { isLibrarian?: 
     });
   };
 
+  const countdownUnits = [
+    {
+      val: timeLeft.days,
+      label: "Days",
+      tone: "var(--v-yellow)",
+      accent: "var(--v-orange)",
+      textClass: "text-amber-700 dark:text-amber-300",
+    },
+    {
+      val: timeLeft.hours,
+      label: "Hours",
+      tone: "var(--v-orange)",
+      accent: "var(--v-hot-pink)",
+      textClass: "text-orange-700 dark:text-orange-300",
+    },
+    {
+      val: timeLeft.minutes,
+      label: "Mins",
+      tone: "var(--v-electric-blue)",
+      accent: "var(--v-cyan)",
+      textClass: "text-blue-700 dark:text-blue-300",
+    },
+    {
+      val: timeLeft.seconds,
+      label: "Secs",
+      tone: "var(--v-emerald)",
+      accent: "var(--v-mint)",
+      textClass: "text-emerald-700 dark:text-emerald-300",
+    },
+  ];
+
+  const scopeCards = [
+    {
+      icon: Target,
+      label: "Target Goal",
+      value: "45 Books",
+      tone: "var(--v-emerald)",
+      accent: "var(--v-mint)",
+      iconBg: "from-emerald-500 to-teal-600",
+      labelColor: "text-emerald-700 dark:text-emerald-300",
+    },
+    {
+      icon: Award,
+      label: "Points Reward",
+      value: "10 Pts / Book",
+      tone: "var(--v-yellow)",
+      accent: "var(--v-orange)",
+      iconBg: "from-amber-500 to-orange-500",
+      labelColor: "text-amber-700 dark:text-amber-300",
+    },
+    {
+      icon: ShieldCheck,
+      label: "Access",
+      value: "All Houses",
+      tone: "var(--v-violet)",
+      accent: "var(--v-electric-blue)",
+      iconBg: "from-violet-500 to-indigo-600",
+      labelColor: "text-violet-700 dark:text-violet-300",
+    },
+  ];
+
   return (
-    <div
-      className="rounded-3xl p-5 mb-8 shadow-2xl relative overflow-hidden space-y-4"
-      style={{
-        background:
-          "linear-gradient(135deg, hsl(212 100% 56% / 0.16) 0%, hsl(270 90% 62% / 0.12) 35%, hsl(140 85% 48% / 0.10) 70%, hsl(50 100% 58% / 0.12) 100%)",
-        border: "1px solid hsl(212 100% 56% / 0.35)",
-        boxShadow: "0 18px 40px -12px hsl(222 45% 4% / 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
-      }}
-    >
-      {/* Decorative background glow divs */}
-      <div 
-        className="absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl pointer-events-none opacity-40"
-        style={{ background: "hsl(var(--v-magenta) / 0.35)" }}
-      />
-      <div 
-        className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full blur-3xl pointer-events-none opacity-40"
-        style={{ background: "hsl(var(--v-electric-blue) / 0.35)" }}
-      />
-
-      {/* TOP BAR DIV: Session Identity & Real-time Status Badge */}
-      <div
-        className="rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 backdrop-blur-md"
-        style={{
-          background: "linear-gradient(90deg, hsl(var(--card) / 0.95) 0%, hsl(var(--card) / 0.8) 100%)",
-          border: "1px solid hsl(var(--primary) / 0.28)",
-        }}
-      >
-        <div className="flex items-center gap-3.5">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--v-yellow)) 0%, hsl(var(--v-orange)) 100%)",
-            }}
-          >
-            <Sparkles className="w-6 h-6 text-slate-950 font-bold" />
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-display font-bold text-lg text-foreground tracking-wide">
-                Academy Reading Session Window
-              </span>
-              <span className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
-                Academic Year 2026/2027
-              </span>
-            </div>
-            <p className="text-xs text-foreground/80 mt-0.5">
-              Official whole-school reading session portal &amp; real-time lock management.
-            </p>
-          </div>
-        </div>
-
-        {/* Status Pill Div */}
-        <div className="flex items-center gap-2 shrink-0 self-start md:self-auto">
-          {status === "active" && (
-            <div
-              className="rounded-2xl px-3.5 py-1.5 flex items-center gap-2 text-xs font-bold text-emerald-400 shadow-sm"
-              style={{
-                background: "linear-gradient(135deg, hsl(140 85% 48% / 0.22) 0%, hsl(160 80% 55% / 0.12) 100%)",
-                border: "1px solid hsl(140 85% 48% / 0.45)",
-              }}
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping inline-block" />
-              <span>🟢 Submissions Window Active &amp; Open</span>
-            </div>
-          )}
-
-          {status === "upcoming" && (
-            <div
-              className="rounded-2xl px-3.5 py-1.5 flex items-center gap-2 text-xs font-bold text-amber-300 shadow-sm"
-              style={{
-                background: "linear-gradient(135deg, hsl(50 100% 58% / 0.22) 0%, hsl(35 100% 55% / 0.12) 100%)",
-                border: "1px solid hsl(50 100% 58% / 0.45)",
-              }}
-            >
-              <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-              <span>⏳ Session Opening Soon</span>
-            </div>
-          )}
-
-          {status === "ended" && (
-            <div
-              className="rounded-2xl px-3.5 py-1.5 flex items-center gap-2 text-xs font-bold text-rose-300 shadow-sm"
-              style={{
-                background: "linear-gradient(135deg, hsl(0 92% 58% / 0.22) 0%, hsl(350 92% 55% / 0.12) 100%)",
-                border: "1px solid hsl(0 92% 58% / 0.45)",
-              }}
-            >
-              <Lock className="w-3.5 h-3.5 text-rose-400" />
-              <span>🔒 Submissions Concluded &amp; Locked</span>
-            </div>
-          )}
-
-          {isLibrarian && (
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs font-bold rounded-xl border-primary/40 bg-primary/10 hover:bg-primary/20 text-foreground"
-            >
-              <Link to="/admin?s=settings">Edit Dates</Link>
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* TWO-COLUMN GRID OF LINEAR GRADIENT DIVS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* CARD DIV 1: Session Dates & Schedule */}
+    <section aria-label="Academy Reading Session Window">
+      {/* Compact single-row bento grid of well-rounded, rotating linear-gradient floating divs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3.5 items-stretch">
+        {/* DIV 1 (3 Cols): Session Identity & Live Status Card */}
         <div
-          className="rounded-2xl p-4 flex flex-col justify-between space-y-3"
+          className="xl:col-span-3 rounded-3xl border p-4 shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between gap-3 rotating-gradient-card"
           style={{
-            background:
-              "linear-gradient(145deg, hsl(212 100% 56% / 0.15) 0%, hsl(222 35% 10% / 0.95) 100%)",
-            border: "1px solid hsl(212 100% 56% / 0.32)",
+            borderColor: "hsl(var(--v-violet) / 0.34)",
+            backgroundImage:
+              "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-violet) / 0.18) 0%, hsl(var(--card)) 48%, hsl(var(--v-electric-blue) / 0.18) 100%)",
           }}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 text-slate-950 flex items-center justify-center shrink-0 shadow-md">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-wider font-extrabold text-violet-700 dark:text-violet-300">
+                2026/2027 Session
+              </div>
+              <h2 className="font-display font-bold text-sm sm:text-base text-foreground leading-snug mt-0.5">
+                Reading Session Window
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
+            {status === "active" && (
+              <div
+                className="rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 border"
+                style={{
+                  borderColor: "hsl(var(--v-emerald) / 0.40)",
+                  backgroundImage:
+                    "linear-gradient(135deg, hsl(var(--v-emerald) / 0.22), hsl(var(--v-mint) / 0.12))",
+                }}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">Window Open</span>
+              </div>
+            )}
+
+            {status === "upcoming" && (
+              <div
+                className="rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-300 border"
+                style={{
+                  borderColor: "hsl(var(--v-yellow) / 0.45)",
+                  backgroundImage:
+                    "linear-gradient(135deg, hsl(var(--v-yellow) / 0.22), hsl(var(--v-orange) / 0.12))",
+                }}
+              >
+                <Clock className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">Opening Soon</span>
+              </div>
+            )}
+
+            {status === "ended" && (
+              <div
+                className="rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 text-[11px] font-bold text-rose-700 dark:text-rose-300 border"
+                style={{
+                  borderColor: "hsl(var(--v-red) / 0.45)",
+                  backgroundImage:
+                    "linear-gradient(135deg, hsl(var(--v-red) / 0.22), hsl(var(--v-hot-pink) / 0.12))",
+                }}
+              >
+                <Lock className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">Window Locked</span>
+              </div>
+            )}
+
+            {isLibrarian && (
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="h-7 px-2.5 text-[11px] font-bold rounded-xl border-primary/35 bg-background/80 hover:bg-primary/10 text-foreground gap-1 whitespace-nowrap shrink-0"
+              >
+                <Link to="/admin?s=controls">
+                  <Sliders className="w-3 h-3 text-primary" />
+                  <span>Edit Dates</span>
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* DIV 2 (3 Cols): Official Timeline Card */}
+        <div
+          className="xl:col-span-3 rounded-3xl border p-4 shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between gap-2.5 rotating-gradient-card"
+          style={{
+            borderColor: "hsl(var(--v-electric-blue) / 0.34)",
+            backgroundImage:
+              "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-electric-blue) / 0.18) 0%, hsl(var(--card)) 50%, hsl(var(--v-cyan) / 0.16) 100%)",
+          }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" /> Official Timeline
             </span>
-            <span className="text-[10px] text-muted-foreground font-mono">Term Calendar</span>
           </div>
 
           <div className="space-y-2">
-            {/* Start Date Div */}
             <div
-              className="rounded-xl p-2.5 flex items-center justify-between"
+              className="rounded-2xl border p-2.5 flex items-center justify-between gap-2"
               style={{
-                background: "linear-gradient(90deg, hsl(212 100% 56% / 0.14) 0%, transparent 100%)",
-                border: "1px solid hsl(212 100% 56% / 0.25)",
+                borderColor: "hsl(var(--v-electric-blue) / 0.28)",
+                backgroundImage:
+                  "linear-gradient(125deg, hsl(var(--v-electric-blue) / 0.16), hsl(var(--card) / 0.92))",
               }}
             >
-              <span className="text-xs text-foreground/80 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Session Start:
-              </span>
-              <span className="text-xs font-bold text-foreground font-mono">
+              <span className="text-[11px] font-semibold text-foreground/85 shrink-0">Start</span>
+              <span className="text-[11px] font-bold text-foreground font-mono tabular-nums truncate">
                 {formatDate(startDate)}
               </span>
             </div>
 
-            {/* Deadline Div */}
             <div
-              className="rounded-xl p-2.5 flex items-center justify-between"
+              className="rounded-2xl border p-2.5 flex items-center justify-between gap-2"
               style={{
-                background: "linear-gradient(90deg, hsl(0 92% 58% / 0.14) 0%, transparent 100%)",
-                border: "1px solid hsl(0 92% 58% / 0.28)",
+                borderColor: "hsl(var(--v-red) / 0.30)",
+                backgroundImage:
+                  "linear-gradient(125deg, hsl(var(--v-red) / 0.15), hsl(var(--card) / 0.92))",
               }}
             >
-              <span className="text-xs text-foreground/80 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-400" /> Lock Deadline:
-              </span>
-              <span className="text-xs font-bold text-rose-300 font-mono">
+              <span className="text-[11px] font-semibold text-foreground/85 shrink-0">Locks</span>
+              <span className="text-[11px] font-bold text-rose-700 dark:text-rose-300 font-mono tabular-nums truncate">
                 {formatDate(endDate)}
               </span>
             </div>
           </div>
-
-          <p className="text-[11px] text-muted-foreground leading-snug">
-            All submitted book reflections submitted before the deadline are reviewed by faculty.
-          </p>
         </div>
 
-        {/* CARD DIV 2: Live Countdown Clocks */}
+        {/* DIV 3 (4 Cols): Live Countdown Card with 4 Color-Coded Floating Unit Divs */}
         <div
-          className="rounded-2xl p-4 flex flex-col justify-between space-y-3"
+          className="xl:col-span-4 rounded-3xl border p-4 shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between gap-2.5 rotating-gradient-card"
           style={{
-            background:
-              "linear-gradient(145deg, hsl(50 100% 58% / 0.15) 0%, hsl(25 100% 55% / 0.10) 50%, hsl(222 35% 10% / 0.95) 100%)",
-            border: "1px solid hsl(50 100% 58% / 0.35)",
+            borderColor: "hsl(var(--v-yellow) / 0.38)",
+            backgroundImage:
+              "linear-gradient(var(--grad-angle, 135deg), hsl(var(--v-yellow) / 0.18) 0%, hsl(var(--card)) 50%, hsl(var(--v-orange) / 0.18) 100%)",
           }}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-              <Hourglass className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+              <Hourglass className="w-3.5 h-3.5" />
               {timeLeft.targetLabel}
             </span>
-            <span className="text-[10px] text-amber-300 font-semibold uppercase tracking-wider">
-              Live Timer
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+              Live
             </span>
           </div>
 
-          {/* 4 Unit Countdown Divs */}
           <div className="grid grid-cols-4 gap-2">
-            {[
-              { val: timeLeft.days, label: "Days", tone: "var(--v-yellow)" },
-              { val: timeLeft.hours, label: "Hours", tone: "var(--v-orange)" },
-              { val: timeLeft.minutes, label: "Mins", tone: "var(--v-electric-blue)" },
-              { val: timeLeft.seconds, label: "Secs", tone: "var(--v-emerald)" },
-            ].map((unit, idx) => (
+            {countdownUnits.map((unit) => (
               <div
-                key={idx}
-                className="rounded-2xl p-2.5 flex flex-col items-center justify-center text-center shadow-md transition-transform hover:scale-105"
+                key={unit.label}
+                className="rounded-2xl border p-2.5 flex flex-col items-center justify-center text-center shadow-sm rotating-gradient-card-fast"
                 style={{
-                  background:
-                    "linear-gradient(180deg, hsl(222 35% 15% / 0.95) 0%, hsl(222 45% 8% / 0.95) 100%)",
-                  border: `1px solid hsl(${unit.tone} / 0.45)`,
-                  boxShadow: `0 4px 14px -2px hsl(${unit.tone} / 0.15)`,
+                  borderColor: `hsl(${unit.tone} / 0.40)`,
+                  backgroundImage: `linear-gradient(var(--grad-angle, 135deg), hsl(${unit.tone} / 0.24) 0%, hsl(var(--card) / 0.94) 52%, hsl(${unit.accent} / 0.18) 100%)`,
                 }}
               >
-                <span
-                  className="font-mono text-xl sm:text-2xl font-black tracking-tight"
-                  style={{ color: `hsl(${unit.tone})` }}
-                >
+                <span className={`font-mono text-xl sm:text-2xl font-black tracking-tight tabular-nums ${unit.textClass}`}>
                   {String(unit.val).padStart(2, "0")}
                 </span>
-                <span className="text-[10px] uppercase tracking-wider font-extrabold text-foreground/75 mt-0.5">
+                <span className="text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-0.5">
                   {unit.label}
                 </span>
               </div>
             ))}
           </div>
+        </div>
 
-          <p className="text-[11px] text-muted-foreground text-center leading-snug">
-            Real-time synchronized countdown across all scholar portals.
-          </p>
+        {/* DIV 4 (2 Cols): 3 Compact Floating Scope Divs */}
+        <div className="xl:col-span-2 grid grid-cols-3 xl:grid-cols-1 gap-2">
+          {scopeCards.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.label}
+                className="rounded-2xl border px-3 py-2 shadow-sm hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2.5 rotating-gradient-card"
+                style={{
+                  borderColor: `hsl(${item.tone} / 0.36)`,
+                  backgroundImage: `linear-gradient(var(--grad-angle, 135deg), hsl(${item.tone} / 0.18) 0%, hsl(var(--card)) 52%, hsl(${item.accent} / 0.14) 100%)`,
+                }}
+              >
+                <div
+                  className={`w-7 h-7 rounded-xl bg-gradient-to-br ${item.iconBg} text-white flex items-center justify-center shrink-0 shadow-xs`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <div className={`text-[9px] font-extrabold uppercase tracking-wider truncate ${item.labelColor}`}>
+                    {item.label}
+                  </div>
+                  <div className="text-[11px] font-bold text-foreground truncate">{item.value}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
-
-      {/* BOTTOM METRIC PILLS BAR DIV */}
-      <div
-        className="rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs"
-        style={{
-          background:
-            "linear-gradient(90deg, hsl(var(--card) / 0.95) 0%, hsl(212 100% 56% / 0.08) 50%, hsl(var(--card) / 0.95) 100%)",
-          border: "1px solid hsl(var(--border) / 0.5)",
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="text-foreground/90 font-medium">
-            <strong>Target:</strong> 45 Books &amp; Reflections
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="text-foreground/90 font-medium">
-            <strong>Points Reward:</strong> 10 Pts per Book + Milestone Honors
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-primary" />
-          <span className="text-foreground/90 font-medium">
-            <strong>Access:</strong> All Academy Houses &amp; Year Groups
-          </span>
-        </div>
-      </div>
-    </div>
+    </section>
   );
 }

@@ -854,25 +854,25 @@ export const SystemLinksManager: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                  <span>4. Follett Destiny Library &amp; Academic Catalog Integrations</span>
+                  <span>4. MFA Follet Destiny &amp; Academic Catalog Integrations</span>
                   <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-500/40 text-[10px]">
                     Academic Bridges
                   </Badge>
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Direct deep links into the school library catalog, Kenya National Library, and IB digital repository.
+                  Direct deep links into MFA Follet Destiny, Kenya National Library, and IB digital repository.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Follett Destiny Link */}
+            {/* MFA Follet Destiny Link */}
             <div className="p-4 rounded-2xl bg-background/60 border border-border/80 space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-bold text-foreground">Follett Destiny OPAC</Label>
+                <Label className="text-xs font-bold text-foreground">MFA Follet Destiny</Label>
                 <Badge variant="outline" className="text-[10px] text-indigo-400 border-indigo-500/30">
-                  School Catalog
+                  MFA Follet Destiny
                 </Badge>
               </div>
               <Input
@@ -886,21 +886,17 @@ export const SystemLinksManager: React.FC = () => {
               />
               <div className="flex items-center justify-between pt-1">
                 <span className="text-[10px] text-muted-foreground">Book borrowing &amp; hold system</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    window.open(
-                      formData.custom_redirects?.follett_destiny ||
-                        "https://mpesafoundationacademy.follettdestiny.com",
-                      "_blank"
-                    )
+                <a
+                  href={
+                    formData.custom_redirects?.follett_destiny ||
+                    "https://mpesafoundationacademy.follettdestiny.com"
                   }
-                  className="h-6 text-[10px] text-indigo-400 hover:text-indigo-300 p-0"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center text-[10px] font-semibold text-indigo-400 hover:text-indigo-300"
                 >
-                  <ExternalLink className="w-3 h-3 mr-1" /> Open OPAC
-                </Button>
+                  <ExternalLink className="w-3 h-3 mr-1" /> Open MFA Follet Destiny
+                </a>
               </div>
             </div>
 

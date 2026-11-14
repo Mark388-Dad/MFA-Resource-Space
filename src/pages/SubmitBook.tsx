@@ -24,7 +24,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { z } from 'zod';
 import { Helmet } from 'react-helmet-async';
 import { AppDownloadButton } from '@/components/AppDownloadBanner';
-import { useSessionDates, SessionCountdownBanner } from '@/components/SessionCountdownBanner';
+import { useSessionDates } from '@/components/SessionCountdownBanner';
 import { cn } from '@/lib/utils';
 import { safeStorage } from '@/lib/safeStorage';
 import { LockedChallengeNotice } from '@/components/LockedChallengeNotice';
@@ -605,7 +605,13 @@ const SubmitBook = () => {
             categoryName: currentCategory?.name || '',
             categoryNumber: validatedData.categoryNumber,
             category_number: validatedData.categoryNumber,
+            dateStarted: validatedData.dateStarted,
+            date_started: validatedData.dateStarted,
             dateFinished: validatedData.dateFinished,
+            date_finished: validatedData.dateFinished,
+            reflection: validatedData.reflection.trim(),
+            approval_status: isAIFlagged ? 'pending' : 'approved',
+            ai_feedback: aiFeedback,
             pointsEarned: totalPoints,
             yearGroup: profile?.year_group || 'Grade 11',
             created_at: new Date().toISOString(),
@@ -746,9 +752,6 @@ const SubmitBook = () => {
             <AppDownloadButton label="Download App" className="text-xs h-9 shrink-0" />
           </div>
         </div>
-
-        {/* Academy Reading Session Window Banner */}
-        <SessionCountdownBanner isLibrarian={isStaff} />
 
         {/* Visual Real-Time Status Indicator Card */}
         {isChallengeLocked ? (

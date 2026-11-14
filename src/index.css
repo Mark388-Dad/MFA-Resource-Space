@@ -359,6 +359,39 @@ h1, h2, h3, h4, h5, h6 {
   50% { opacity: 1; }
 }
 
+@property --grad-angle {
+  syntax: "<angle>";
+  initial-value: 135deg;
+  inherits: false;
+}
+
+@keyframes rotateGradientAngle {
+  0% {
+    --grad-angle: 0deg;
+    background-position: 0% 50%;
+  }
+  50% {
+    --grad-angle: 180deg;
+    background-position: 100% 50%;
+  }
+  100% {
+    --grad-angle: 360deg;
+    background-position: 0% 50%;
+  }
+}
+
+.rotating-gradient-card {
+  --grad-angle: 135deg;
+  background-size: 160% 160%;
+  animation: rotateGradientAngle 14s linear infinite;
+}
+
+.rotating-gradient-card-fast {
+  --grad-angle: 135deg;
+  background-size: 180% 180%;
+  animation: rotateGradientAngle 9s linear infinite;
+}
+
 /* Balanced deep navy blue & black background for the school homepage */
 .theme-soft {
   --background: 222 47% 7%;

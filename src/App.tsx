@@ -43,17 +43,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 // Auth Route wrapper - opens directly without loading screens
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   if (user) {
-    if (
-      profile?.role === 'admin' ||
-      profile?.role === 'librarian' ||
-      user.email?.toLowerCase().includes('admin') ||
-      user.email?.toLowerCase().includes('librarian')
-    ) {
-      return <Navigate to="/admin?s=submissions" replace />;
-    }
     return <Navigate to="/dashboard" replace />;
   }
 

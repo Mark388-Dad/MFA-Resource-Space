@@ -129,7 +129,7 @@ export const LockedChallengeNotice: React.FC<LockedChallengeNoticeProps> = ({
     setIsSending(false);
     setDialogStep('sent');
 
-    toast.success('Unlock request email dispatched & logged to In-Built Challenge Inbox!', {
+    toast.success('Unlock request email dispatched & logged to your Inbox!', {
       duration: 6000,
       description: `Dispatched to Tonny Odundo (${ADMIN_EMAIL}) and recorded in your Web Inbox.`,
     });
@@ -519,7 +519,7 @@ export const LockedChallengeNotice: React.FC<LockedChallengeNoticeProps> = ({
                   className="text-xs font-bold h-9 px-4 gap-1.5 bg-amber-500 hover:bg-amber-400 text-black border-0 shadow-md"
                 >
                   <Mail className="w-3.5 h-3.5" />
-                  View in Challenge Inbox
+                  View in Inbox
                 </Button>
                 <Button
                   type="button"
