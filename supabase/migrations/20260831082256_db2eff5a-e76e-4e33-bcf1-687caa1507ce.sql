@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.set_chat_sender_name() FROM anon, authenticated, public;

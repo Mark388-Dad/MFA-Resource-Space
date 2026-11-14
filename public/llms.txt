@@ -1,0 +1,15 @@
+# 45-Book Reading Challenge
+
+> Mpesa Foundation Academy's 2025/2026 reading challenge — students read 45 books across themed categories, reflect on each book, and climb school-wide leaderboards. Designed around the IB Learner Profile and the theme "Fiction as a Mirror of Humanity."
+
+The platform supports students, homeroom tutors, heads of year, house patrons, and librarians. Students log books and reflections; staff curate challenges, review submissions, run leaderboards, and issue milestone certificates.
+
+## Pages
+
+- [Home](/): Programme overview, goals, point system, categories, IB connections.
+- [Sign in / Sign up](/auth): Account access for students and staff using an access code.
+- [Leaderboard](/leaderboard): School-wide rankings by year group, class, house, and student.
+
+## Optional
+
+- [Reset password](/reset-password): Password reset flow (transient).

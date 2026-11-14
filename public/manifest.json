@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "45-Book Reading Challenge — Mpesa Foundation Academy",
+  "short_name": "MFA Reading",
+  "description": "Mpesa Foundation Academy reading challenge platform: submit books, track leaderboards, and earn certificates.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0B1D3A",
+  "theme_color": "#0B1D3A",
+  "categories": ["education", "books", "productivity"],
+  "icons": [
+    {
+      "src": "/school-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/school-badge.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/school-badge.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

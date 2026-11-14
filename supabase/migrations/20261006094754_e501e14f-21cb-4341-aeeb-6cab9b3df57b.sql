@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.lock_student_academic_fields() FROM anon, authenticated, public;

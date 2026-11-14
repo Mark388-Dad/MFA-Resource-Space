@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Official Certificate Verification Collection
+    match /certificates/{certId} {
+      // Anyone can verify official certificates with a valid code or ID
+      allow read: if true;
+      // Creation and updates are allowed for certificate issuance
+      allow create, update: if true;
+      allow delete: if request.auth != null;
+    }
+  }
+}

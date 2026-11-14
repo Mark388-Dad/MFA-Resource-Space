@@ -1,0 +1,75 @@
+{
+  "entities": {
+    "Certificate": {
+      "title": "Certificate",
+      "description": "An authenticated M-PESA Foundation Academy reading challenge certificate",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique certificate identifier or serial hash"
+        },
+        "verificationCode": {
+          "type": "string",
+          "description": "Public verification serial code, e.g. MFA-CERT-KEN-8870"
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Full name of the recipient scholar"
+        },
+        "studentEmail": {
+          "type": "string",
+          "description": "School email of the recipient"
+        },
+        "house": {
+          "type": "string",
+          "description": "Academy house affiliation"
+        },
+        "yearGroup": {
+          "type": "string",
+          "description": "Year group or cohort, e.g. DP1, DP2"
+        },
+        "level": {
+          "type": "string",
+          "description": "Award level tier (Gold, Silver, Bronze, Beginner)"
+        },
+        "booksCount": {
+          "type": "number",
+          "description": "Verified number of literary books read"
+        },
+        "challengeTitle": {
+          "type": "string",
+          "description": "Title of the reading challenge"
+        },
+        "signatoryName": {
+          "type": "string",
+          "description": "Name of the presiding director or librarian"
+        },
+        "signatoryTitle": {
+          "type": "string",
+          "description": "Title of the signatory"
+        },
+        "dateAwarded": {
+          "type": "string",
+          "description": "Official award issuance date"
+        },
+        "issuedAt": {
+          "type": "string",
+          "description": "ISO timestamp of certificate creation"
+        },
+        "status": {
+          "type": "string",
+          "description": "Verification status: valid or revoked",
+          "enum": ["valid", "revoked"]
+        }
+      },
+      "required": ["verificationCode", "studentName", "level", "booksCount"]
+    }
+  },
+  "firestore": {
+    "/certificates/{certId}": {
+      "schema": "Certificate",
+      "description": "Collection of official academy reading certificates verifiable by QR code or ID"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>FullScreen</key>
+			<true/>
+			<key>IsRemovable</key>
+			<true/>
+			<key>Label</key>
+			<string>MFA Reading Challenge</string>
+			<key>PayloadDescription</key>
+			<string>Installs the M-PESA Foundation Academy 45-Book Reading Challenge app directly onto your iPad home screen.</string>
+			<key>PayloadDisplayName</key>
+			<string>MFA Reading Challenge</string>
+			<key>PayloadIdentifier</key>
+			<string>ke.ac.mpesafoundationacademy.readingchallenge.webclip</string>
+			<key>PayloadType</key>
+			<string>com.apple.webClip.managed</string>
+			<key>PayloadUUID</key>
+			<string>76D74386-3532-47C0-B955-44CA861B8282</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>Precomposed</key>
+			<true/>
+			<key>URL</key>
+			<string>https://ais-dev-6ebcmlzpakcvtltn4zlof4-370442547753.europe-west2.run.app</string>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Direct iPad installation for M-PESA Foundation Academy Reading Challenge.</string>
+	<key>PayloadDisplayName</key>
+	<string>MFA Reading Challenge Web App</string>
+	<key>PayloadIdentifier</key>
+	<string>ke.ac.mpesafoundationacademy.readingchallenge</string>
+	<key>PayloadOrganization</key>
+	<string>M-PESA Foundation Academy</string>
+	<key>PayloadRemovalDisallowed</key>
+	<false/>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>D9581A07-44DE-45AE-B647-759FFDF26A74</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>
